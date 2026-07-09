@@ -178,6 +178,18 @@
   .opcao-conversar{ border-color:#ffd9cf; }
   .opcao-dicionario{ border-color:#cfeaff; }
   .opcao-jogos{ border-color:#dcffe0; }
+  .opcao-quiz{ border-color:#f0e2ff; }
+
+  /* Grade de assuntos no menu principal */
+  .menu-grade{
+    display:grid; grid-template-columns:1fr 1fr; gap:10px;
+  }
+  .menu-grade .opcao-card{ flex-direction:column; text-align:center; gap:6px; padding:16px 8px; }
+  .menu-grade .opcao-icone{ font-size:1.9rem; }
+  .menu-grade .opcao-titulo{ font-size:.88rem; }
+  @media (max-width:420px){ .menu-grade{ grid-template-columns:1fr; } }
+
+  footer a{ color:var(--mint-dark); }
 
   /* Grade de jogos: cards centralizados sem descrição */
   #tela-jogos .menu-opcoes{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
@@ -341,7 +353,7 @@
         </div>
       </div></div>
       <h1>Oi! Eu sou o Beep! 👋</h1>
-      <div class="balao" style="margin-bottom:6px;">Escolha uma das opções abaixo:</div>
+      <div class="balao" style="margin-bottom:6px;">Escolha um assunto:</div>
 
       <div class="menu-opcoes">
         <button class="opcao-card opcao-conversar" onclick="irPara('tela-cadastro')">
@@ -349,23 +361,58 @@
           <span class="opcao-titulo">Conversar comigo</span>
           <span class="opcao-desc">Responda perguntas e ganhe elogios do Beep!</span>
         </button>
+      </div>
 
+      <div class="menu-opcoes menu-grade">
+        <button class="opcao-card opcao-quiz" onclick="location.href='quizes.html?assunto=empresa'">
+          <span class="opcao-icone">🏢</span>
+          <span class="opcao-titulo">Nossa Empresa</span>
+        </button>
+        <button class="opcao-card opcao-quiz" onclick="location.href='quizes.html?assunto=geral'">
+          <span class="opcao-icone">🧠</span>
+          <span class="opcao-titulo">Conhecimentos Gerais</span>
+        </button>
+        <button class="opcao-card opcao-quiz" onclick="location.href='quizes.html?assunto=matematica'">
+          <span class="opcao-icone">➗</span>
+          <span class="opcao-titulo">Matemática</span>
+        </button>
+        <button class="opcao-card opcao-quiz" onclick="location.href='quizes.html?assunto=ingles'">
+          <span class="opcao-icone">🇬🇧</span>
+          <span class="opcao-titulo">Inglês</span>
+        </button>
+        <button class="opcao-card opcao-quiz" onclick="location.href='quizes.html?assunto=ciencias'">
+          <span class="opcao-icone">🔬</span>
+          <span class="opcao-titulo">Ciências</span>
+        </button>
+        <button class="opcao-card opcao-quiz" onclick="location.href='quizes.html?assunto=historia'">
+          <span class="opcao-icone">🏺</span>
+          <span class="opcao-titulo">História</span>
+        </button>
+        <button class="opcao-card opcao-quiz" onclick="location.href='quizes.html?assunto=geografia'">
+          <span class="opcao-icone">🌎</span>
+          <span class="opcao-titulo">Geografia</span>
+        </button>
+        <button class="opcao-card opcao-quiz" onclick="location.href='quizes.html?assunto=artes'">
+          <span class="opcao-icone">🖌️</span>
+          <span class="opcao-titulo">Artes</span>
+        </button>
         <button class="opcao-card opcao-dicionario" onclick="irPara('tela-dicionario')">
           <span class="opcao-icone">📖</span>
           <span class="opcao-titulo">Dicionário</span>
-          <span class="opcao-desc">Procure o significado das palavras.</span>
         </button>
-
         <button class="opcao-card opcao-jogos" onclick="irPara('tela-jogos')">
           <span class="opcao-icone">🎮</span>
           <span class="opcao-titulo">Jogos</span>
-          <span class="opcao-desc">Jogo da Velha, Memória e muito mais!</span>
         </button>
       </div>
 
       <p style="margin-top:16px;"><a href="#" class="link-discreto" onclick="irPara('tela-professor-login'); return false;">🔒 Área do professor</a></p>
     </div>
-    <footer>Versão 2 · Conversar, Dicionário e Jogos</footer>
+    <footer>
+      Versão 2 · Conversar, Quizzes, Dicionário e Jogos<br>
+      Desenvolvido por <strong>Isawere Sistemas</strong> · conheça mais em
+      <a href="https://www.isaweresistemas.com.br" target="_blank" rel="noopener" class="link-discreto" style="text-decoration:underline;">www.isaweresistemas.com.br</a>
+    </footer>
   </section>
 
   <!-- ====================== TELA 1b: DICIONÁRIO (em preparação) ====================== -->

@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quizzes — Robô Escolar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky-1:#eaf4ff;
+    --sky-2:#f3ecff;
+    --ink:#2e294e;
+    --ink-soft:#5b5480;
+    --coral:#ff6f59;
+    --coral-dark:#e8543d;
+    --mint:#3dbfae;
+    --mint-dark:#2c9c8d;
+    --sun:#ffc94d;
+    --card:#ffffff;
+    --card-line:#eae6f7;
+    --shadow: 0 18px 40px -18px rgba(46,41,78,.25);
+    --radius: 26px;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:'Nunito',sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(circle at 12% 18%, #ffe9c9 0%, transparent 40%),
+      radial-gradient(circle at 88% 12%, #d6f3ff 0%, transparent 38%),
+      radial-gradient(circle at 85% 88%, #ffd6e6 0%, transparent 42%),
+      linear-gradient(160deg, var(--sky-1), var(--sky-2));
+    overflow-x:hidden;
+    position:relative;
+  }
+  .bg-blob{ position:fixed; border-radius:50%; opacity:.5; filter:blur(2px); animation: float 9s ease-in-out infinite; pointer-events:none; }
+  @keyframes float{ 0%,100%{ transform: translateY(0) rotate(0deg); } 50%{ transform: translateY(-22px) rotate(8deg); } }
+  .star{ font-size:28px; opacity:.35; }
+  #stage{ min-height:100vh; display:flex; align-items:center; justify-content:center; padding:28px 16px; position:relative; z-index:1; }
+  .screen{ width:100%; max-width:640px; display:none; animation: pop .45s ease; }
+  .screen.active{ display:block; }
+  @keyframes pop{ from{ opacity:0; transform: translateY(18px) scale(.98); } to{ opacity:1; transform: translateY(0) scale(1); } }
+  .card{ background:var(--card); border-radius:var(--radius); box-shadow: var(--shadow); border:1px solid var(--card-line); padding:36px 32px; }
+  h1,h2,h3{ font-family:'Baloo 2',sans-serif; margin:0 0 6px; line-height:1.15; }
+  h1{ font-size:2rem; }
+  h2{ font-size:1.5rem; }
+  p{ line-height:1.55; color:var(--ink-soft); }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:.78rem;
+    letter-spacing:.08em; text-transform:uppercase; color:var(--mint-dark); background:#e8faf6; padding:6px 14px;
+    border-radius:100px; margin-bottom:14px;
+  }
+  .hint{ font-size:.8rem; color:#9b93bf; margin-top:4px; }
+  .link-discreto{ color:var(--ink-soft); font-size:.8rem; text-decoration:none; font-family:'Baloo 2',sans-serif; }
+  .link-discreto:hover{ color:var(--coral); }
+
+  .btn{
+    font-family:'Baloo 2',sans-serif; font-weight:700; font-size:1rem; border:none; border-radius:100px; padding:14px 26px;
+    cursor:pointer; transition:.15s transform, .15s box-shadow; box-shadow:0 8px 0 rgba(0,0,0,.08);
+  }
+  .btn:active{ transform:translateY(3px); box-shadow:0 4px 0 rgba(0,0,0,.08); }
+  .btn-primary{ background:var(--coral); color:#fff; }
+  .btn-primary:hover{ background:var(--coral-dark); }
+  .btn-secondary{ background:#fff; color:var(--ink); border:2px solid var(--card-line); }
+  .btn-secondary:hover{ border-color:var(--mint); }
+  .btn-row{ display:flex; gap:12px; margin-top:24px; flex-wrap:wrap; }
+  .btn-row .btn{ flex:1; min-width:140px; }
+  .btn-block{ width:100%; }
+
+  /* ---------- ROBO (mesmo elemento assinatura da home, versão simples) ---------- */
+  .robo-wrap{ display:flex; justify-content:center; margin:6px 0 18px; }
+  .robo{ width:120px; height:96px; position:relative; }
+  .robo .antena{ position:absolute; top:-18px; left:50%; transform:translateX(-50%); width:5px; height:20px; background:var(--ink); border-radius:4px; }
+  .robo .antena::after{ content:''; position:absolute; top:-9px; left:50%; transform:translateX(-50%); width:13px; height:13px; border-radius:50%; background:var(--coral); }
+  .robo .cabeca{
+    position:absolute; top:4px; left:50%; transform:translateX(-50%); width:112px; height:88px;
+    background:linear-gradient(160deg,#fff,#eef2ff); border-radius:28px; border:4px solid var(--ink);
+  }
+  .robo .visor{ position:absolute; top:20px; left:50%; transform:translateX(-50%); width:84px; height:42px; background:var(--ink); border-radius:16px; display:flex; align-items:center; justify-content:space-around; padding:0 12px; }
+  .robo .olho{ width:13px; height:13px; border-radius:50%; background:var(--mint); animation: piscar 4.2s infinite; }
+  @keyframes piscar{ 0%,92%,100%{ transform:scaleY(1); } 95%{ transform:scaleY(.12); } }
+  .robo .boca{ position:absolute; bottom:16px; left:50%; transform:translateX(-50%); width:36px; height:8px; background:var(--sun); border-radius:0 0 8px 8px; }
+  .robo .orelha{ position:absolute; top:34px; width:8px; height:20px; background:var(--ink); border-radius:6px; }
+  .robo .orelha.esq{ left:-2px; } .robo .orelha.dir{ right:-2px; }
+
+  .balao{
+    position:relative; background:#fff; border:3px solid var(--ink); border-radius:20px; padding:16px 18px; margin-top:6px;
+    font-family:'Baloo 2',sans-serif; font-size:1.08rem; color:var(--ink); text-align:center;
+  }
+  .balao::before{
+    content:''; position:absolute; top:-14px; left:50%; transform:translateX(-50%) rotate(45deg);
+    width:22px; height:22px; background:#fff; border-left:3px solid var(--ink); border-top:3px solid var(--ink);
+  }
+
+  /* ---------- MENU DE ASSUNTOS ---------- */
+  .menu-opcoes{ display:flex; flex-direction:column; gap:12px; margin-top:20px; text-align:left; }
+  .menu-grade{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .opcao-card{
+    display:flex; align-items:center; gap:14px; width:100%; background:#f7f5ff; border:2px solid var(--card-line);
+    border-radius:18px; padding:14px 16px; cursor:pointer; font-family:'Nunito',sans-serif;
+    transition:.15s transform, .15s border-color, .15s background; text-align:left;
+  }
+  .opcao-card:hover{ border-color:var(--mint); background:#eefaf7; transform:translateY(-2px); }
+  .opcao-card:active{ transform:translateY(0); }
+  .menu-grade .opcao-card{ flex-direction:column; text-align:center; gap:6px; padding:16px 8px; }
+  .opcao-icone{ font-size:1.9rem; line-height:1; flex-shrink:0; }
+  .opcao-titulo{ display:block; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:.92rem; color:var(--ink); }
+  @media (max-width:420px){ .menu-grade{ grid-template-columns:1fr; } }
+
+  /* ---------- NÍVEIS ---------- */
+  .niveis-lista{ display:flex; flex-direction:column; gap:12px; margin-top:20px; }
+  .nivel-btn{
+    padding:16px 18px; border-radius:18px; border:2px solid var(--card-line); background:#fff;
+    font-family:'Baloo 2',sans-serif; font-weight:700; font-size:1.05rem; cursor:pointer;
+    display:flex; align-items:center; justify-content:space-between; transition:.15s all; color:var(--ink);
+  }
+  .nivel-btn:hover{ transform:translateY(-2px); }
+  .nivel-btn.facil{ border-color:var(--mint); }
+  .nivel-btn.medio{ border-color:var(--sun); }
+  .nivel-btn.dificil{ border-color:var(--coral); }
+
+  /* ---------- QUIZ ---------- */
+  .progresso-wrap{ margin-bottom:18px; }
+  .progresso-barra{ height:12px; background:#eee7ff; border-radius:100px; overflow:hidden; }
+  .progresso-fill{ height:100%; background:linear-gradient(90deg,var(--mint),var(--coral)); border-radius:100px; transition:width .4s ease; }
+  .progresso-txt{ font-family:'Baloo 2',sans-serif; font-size:.82rem; color:var(--ink-soft); margin-top:6px; text-align:right; }
+  .categoria-tag{
+    display:inline-block; background:#fff3e2; color:#c07a1f; font-family:'Baloo 2',sans-serif;
+    font-weight:700; font-size:.78rem; padding:5px 13px; border-radius:100px; margin-bottom:10px;
+  }
+  .pergunta-txt{ font-family:'Baloo 2',sans-serif; font-size:1.28rem; margin:8px 0 18px; color:var(--ink); text-align:center; }
+  .opcoes-lista{ display:flex; flex-direction:column; gap:10px; }
+  .resposta-btn{
+    text-align:left; width:100%; padding:14px 16px; border-radius:16px; border:2px solid var(--card-line);
+    background:#fff; font-family:'Nunito',sans-serif; font-size:.98rem; color:var(--ink); cursor:pointer;
+    transition:.15s all;
+  }
+  .resposta-btn:hover:not(:disabled){ border-color:var(--mint); background:#f4fffb; }
+  .resposta-btn:disabled{ cursor:default; }
+  .resposta-btn.correta{ border-color:var(--mint); background:#e6faf5; font-weight:700; }
+  .resposta-btn.errada{ border-color:var(--coral); background:#fff1ee; font-weight:700; }
+
+  /* ---------- RESULTADO ---------- */
+  .resultado-box{
+    text-align:center; border:4px double var(--sun); border-radius:20px; padding:28px 22px;
+    background:linear-gradient(180deg,#fffdf6,#fff);
+  }
+  .resultado-medalha{ font-size:4rem; margin:8px 0; }
+  .resultado-nota{ font-family:'Baloo 2',sans-serif; font-size:2rem; color:var(--coral); font-weight:800; margin:6px 0; }
+
+  .confete{ position:fixed; top:-10px; border-radius:2px; z-index:60; pointer-events:none; }
+
+  footer{ text-align:center; font-size:.78rem; color:#9b93bf; margin-top:18px; font-family:'Baloo 2',sans-serif; }
+  footer a{ color:var(--mint-dark); }
+
+  @media (max-width:480px){
+    .card{ padding:26px 20px; }
+    h1{ font-size:1.6rem; }
+    .pergunta-txt{ font-size:1.1rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-blob star" style="top:8%; left:6%;">✨</div>
+<div class="bg-blob star" style="top:70%; left:4%; animation-delay:1.2s;">⭐</div>
+<div class="bg-blob star" style="top:16%; right:7%; animation-delay:2s;">🌟</div>
+<div class="bg-blob star" style="bottom:8%; right:9%; animation-delay:.6s;">✨</div>
+
+<div id="stage">
+
+  <!-- ====================== TELA 1: MENU DE ASSUNTOS ====================== -->
+  <section class="screen active" id="tela-menu-assuntos">
+    <div class="card" style="text-align:center;">
+      <span class="eyebrow">🧩 Quizzes</span>
+      <div class="robo-wrap"><div class="robo">
+        <div class="antena"></div>
+        <div class="cabeca">
+          <div class="orelha esq"></div><div class="orelha dir"></div>
+          <div class="visor"><div class="olho"></div><div class="olho"></div></div>
+          <div class="boca"></div>
+        </div>
+      </div></div>
+      <h1>Escolha um assunto!</h1>
+      <div class="balao" style="margin-bottom:6px;">Vamos testar o que você sabe? 🤔</div>
+
+      <div class="menu-opcoes menu-grade">
+        <button class="opcao-card" onclick="selecionarAssunto('empresa')">
+          <span class="opcao-icone">🏢</span><span class="opcao-titulo">Nossa Empresa</span>
+        </button>
+        <button class="opcao-card" onclick="selecionarAssunto('geral')">
+          <span class="opcao-icone">🧠</span><span class="opcao-titulo">Conhecimentos Gerais</span>
+        </button>
+        <button class="opcao-card" onclick="selecionarAssunto('matematica')">
+          <span class="opcao-icone">➗</span><span class="opcao-titulo">Matemática</span>
+        </button>
+        <button class="opcao-card" onclick="selecionarAssunto('ingles')">
+          <span class="opcao-icone">🇬🇧</span><span class="opcao-titulo">Inglês</span>
+        </button>
+        <button class="opcao-card" onclick="selecionarAssunto('ciencias')">
+          <span class="opcao-icone">🔬</span><span class="opcao-titulo">Ciências</span>
+        </button>
+        <button class="opcao-card" onclick="selecionarAssunto('historia')">
+          <span class="opcao-icone">🏺</span><span class="opcao-titulo">História</span>
+        </button>
+        <button class="opcao-card" onclick="selecionarAssunto('geografia')">
+          <span class="opcao-icone">🌎</span><span class="opcao-titulo">Geografia</span>
+        </button>
+        <button class="opcao-card" onclick="selecionarAssunto('artes')">
+          <span class="opcao-icone">🖌️</span><span class="opcao-titulo">Artes</span>
+        </button>
+      </div>
+
+      <div class="btn-row">
+        <a href="robo-escolar-v2.html" class="btn btn-secondary btn-block" style="text-decoration:none; display:flex; align-items:center; justify-content:center;">← Voltar para o início</a>
+      </div>
+    </div>
+    <footer>
+      Desenvolvido por <strong>Isawere Sistemas</strong> · conheça mais em
+      <a href="https://www.isaweresistemas.com.br" target="_blank" rel="noopener">www.isaweresistemas.com.br</a>
+    </footer>
+  </section>
+
+  <!-- ====================== TELA 2: ESCOLHA DE NÍVEL ====================== -->
+  <section class="screen" id="tela-nivel">
+    <div class="card" style="text-align:center;">
+      <span class="eyebrow" id="nivel-eyebrow">🧩 Assunto</span>
+      <div class="robo-wrap"><div class="robo">
+        <div class="antena"></div>
+        <div class="cabeca">
+          <div class="orelha esq"></div><div class="orelha dir"></div>
+          <div class="visor"><div class="olho"></div><div class="olho"></div></div>
+          <div class="boca"></div>
+        </div>
+      </div></div>
+      <h2 id="nivel-titulo">Escolha o nível</h2>
+      <p>Quanto mais difícil, mais pontos você mostra que sabe!</p>
+
+      <div class="niveis-lista">
+        <button class="nivel-btn facil" onclick="escolherNivel('facil')">😊 Fácil <span>→</span></button>
+        <button class="nivel-btn medio" onclick="escolherNivel('medio')">🙂 Médio <span>→</span></button>
+        <button class="nivel-btn dificil" onclick="escolherNivel('dificil')">🔥 Difícil <span>→</span></button>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-secondary btn-block" onclick="voltarAoMenu()">← Escolher outro assunto</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== TELA 3: QUIZ ====================== -->
+  <section class="screen" id="tela-quiz">
+    <div class="card">
+      <div class="progresso-wrap">
+        <div class="progresso-barra"><div class="progresso-fill" id="quiz-barra-fill" style="width:0%;"></div></div>
+        <div class="progresso-txt" id="quiz-progresso-txt">Pergunta 1 de 3</div>
+      </div>
+
+      <div style="text-align:center;">
+        <span class="categoria-tag" id="quiz-categoria-tag">Assunto</span>
+        <p class="pergunta-txt" id="quiz-pergunta-txt">Pergunta...</p>
+      </div>
+
+      <div class="opcoes-lista" id="quiz-opcoes-lista"></div>
+
+      <div class="btn-row" id="quiz-btn-proxima-wrap" style="display:none;">
+        <button class="btn btn-primary btn-block" onclick="proximaPerguntaQuiz()" id="quiz-btn-proxima">Próxima pergunta →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== TELA 4: RESULTADO ====================== -->
+  <section class="screen" id="tela-resultado">
+    <div class="card">
+      <div class="robo-wrap"><div class="robo">
+        <div class="antena"></div>
+        <div class="cabeca">
+          <div class="orelha esq"></div><div class="orelha dir"></div>
+          <div class="visor"><div class="olho"></div><div class="olho"></div></div>
+          <div class="boca"></div>
+        </div>
+      </div></div>
+
+      <div class="resultado-box">
+        <div class="eyebrow" style="background:#fff3e2;color:#c07a1f;">🏆 Resultado</div>
+        <div class="resultado-medalha" id="resultado-medalha">🥇</div>
+        <h2 id="resultado-titulo">Muito bem!</h2>
+        <div class="resultado-nota" id="resultado-nota">3/3</div>
+        <p id="resultado-mensagem">Você mandou muito bem nesse quiz!</p>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="tentarNovamente()">🔁 Tentar novamente</button>
+        <button class="btn btn-primary" style="flex:2;" onclick="voltarAoMenu()">Escolher outro assunto</button>
+      </div>
+      <div class="btn-row">
+        <a href="robo-escolar-v2.html" class="btn btn-secondary btn-block" style="text-decoration:none; display:flex; align-items:center; justify-content:center;">← Voltar para o início</a>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+/* =========================================================================
+   BANCO DE QUIZZES — cada assunto tem ~3 perguntas demonstrativas.
+   Assuntos com "niveis" pedem Fácil/Médio/Difícil antes de começar.
+   Assuntos com "semNivel" vão direto para o quiz (ex: Nossa Empresa).
+   Mais perguntas podem ser adicionadas aqui no futuro.
+   ========================================================================= */
+const QUIZZES = {
+  empresa: {
+    titulo: "Nossa Empresa", icone: "🏢", semNivel: true,
+    perguntas: [
+      { pergunta:"Qual é o nome da empresa responsável por este sistema?",
+        opcoes:["Isawere Sistemas","TechKids","EduBot Company","Sistemas Ltda"], correta:0 },
+      { pergunta:"Qual destas opções é um objetivo deste sistema?",
+        opcoes:["Ajudar crianças a aprender brincando","Vender produtos online","Fazer compras no mercado","Assistir vídeos"], correta:0 },
+      { pergunta:"Onde você pode conhecer mais sobre a empresa que criou este sistema?",
+        opcoes:["No site www.isaweresistemas.com.br","Em uma loja física","Apenas por telefone","Não é possível saber mais"], correta:0 }
+    ]
+  },
+  geral: {
+    titulo:"Conhecimentos Gerais", icone:"🧠",
+    niveis:{
+      facil:[
+        { pergunta:"Quantos dias tem uma semana?", opcoes:["5","6","7","8"], correta:2 },
+        { pergunta:"Quais são as cores da bandeira do Brasil que aparecem mais?", opcoes:["Verde e amarelo","Azul e branco","Vermelho e preto","Roxo e cinza"], correta:0 },
+        { pergunta:"Quantas patas tem um cachorro?", opcoes:["2","4","6","8"], correta:1 }
+      ],
+      medio:[
+        { pergunta:"Quem escreveu o livro \"Dom Casmurro\"?", opcoes:["Machado de Assis","Monteiro Lobato","Clarice Lispector","José de Alencar"], correta:0 },
+        { pergunta:"Qual é o maior oceano do mundo?", opcoes:["Atlântico","Índico","Pacífico","Ártico"], correta:2 },
+        { pergunta:"Em que continente fica o Egito?", opcoes:["Ásia","África","Europa","América"], correta:1 }
+      ],
+      dificil:[
+        { pergunta:"Qual é a capital da Austrália?", opcoes:["Sydney","Melbourne","Canberra","Perth"], correta:2 },
+        { pergunta:"Quem pintou a Mona Lisa?", opcoes:["Michelangelo","Leonardo da Vinci","Van Gogh","Picasso"], correta:1 },
+        { pergunta:"Qual é o menor país do mundo?", opcoes:["Mônaco","Vaticano","San Marino","Liechtenstein"], correta:1 }
+      ]
+    }
+  },
+  matematica: {
+    titulo:"Matemática", icone:"➗",
+    niveis:{
+      facil:[
+        { pergunta:"Quanto é 2 + 2?", opcoes:["3","4","5","22"], correta:1 },
+        { pergunta:"Quanto é 10 − 4?", opcoes:["5","6","7","4"], correta:1 },
+        { pergunta:"Qual número vem depois do 9?", opcoes:["8","10","11","7"], correta:1 }
+      ],
+      medio:[
+        { pergunta:"Quanto é 7 × 6?", opcoes:["36","42","48","40"], correta:1 },
+        { pergunta:"Quanto é 100 ÷ 4?", opcoes:["20","25","15","30"], correta:1 },
+        { pergunta:"Qual é o resultado de 15 + 27?", opcoes:["42","32","52","40"], correta:0 }
+      ],
+      dificil:[
+        { pergunta:"Quanto é 12²?", opcoes:["124","144","132","164"], correta:1 },
+        { pergunta:"Qual é a raiz quadrada de 81?", opcoes:["8","9","7","10"], correta:1 },
+        { pergunta:"Quanto é 3/4 em porcentagem?", opcoes:["34%","75%","43%","25%"], correta:1 }
+      ]
+    }
+  },
+  ingles: {
+    titulo:"Inglês", icone:"🇬🇧",
+    niveis:{
+      facil:[
+        { pergunta:"Como se diz \"cachorro\" em inglês?", opcoes:["Cat","Dog","Bird","Fish"], correta:1 },
+        { pergunta:"O que significa a cor \"red\" em português?", opcoes:["Azul","Verde","Vermelho","Amarelo"], correta:2 },
+        { pergunta:"Como se diz \"obrigado\" em inglês?", opcoes:["Please","Sorry","Thank you","Hello"], correta:2 }
+      ],
+      medio:[
+        { pergunta:"O que significa o verbo \"to eat\"?", opcoes:["Comer","Correr","Dormir","Nadar"], correta:0 },
+        { pergunta:"Complete: \"I ___ a student.\"", opcoes:["is","am","are","be"], correta:1 },
+        { pergunta:"Qual é o plural de \"child\"?", opcoes:["childs","children","childes","child"], correta:1 }
+      ],
+      dificil:[
+        { pergunta:"Qual é o passado do verbo \"go\"?", opcoes:["goed","went","gone","going"], correta:1 },
+        { pergunta:"O que significa \"although\"?", opcoes:["porque","embora","quando","onde"], correta:1 },
+        { pergunta:"Escolha a frase correta:", opcoes:["She don't like it","She doesn't likes it","She doesn't like it","She not like it"], correta:2 }
+      ]
+    }
+  },
+  ciencias: {
+    titulo:"Ciências", icone:"🔬",
+    niveis:{
+      facil:[
+        { pergunta:"Quantos sentidos o ser humano possui?", opcoes:["3","4","5","6"], correta:2 },
+        { pergunta:"Qual planeta é conhecido como o Planeta Vermelho?", opcoes:["Vênus","Marte","Júpiter","Saturno"], correta:1 },
+        { pergunta:"O que as plantas precisam para fazer fotossíntese?", opcoes:["Luz solar","Escuridão","Sal","Gelo"], correta:0 }
+      ],
+      medio:[
+        { pergunta:"Qual órgão é responsável por bombear o sangue?", opcoes:["Pulmão","Fígado","Coração","Rim"], correta:2 },
+        { pergunta:"Qual gás os seres humanos precisam respirar para viver?", opcoes:["Gás carbônico","Oxigênio","Nitrogênio","Hélio"], correta:1 },
+        { pergunta:"Aproximadamente quantos ossos tem o corpo humano adulto?", opcoes:["106","150","206","300"], correta:2 }
+      ],
+      dificil:[
+        { pergunta:"Qual é a menor unidade da vida?", opcoes:["Átomo","Célula","Molécula","Tecido"], correta:1 },
+        { pergunta:"Como se chama o processo de transformação da água em vapor?", opcoes:["Condensação","Evaporação","Solidificação","Fusão"], correta:1 },
+        { pergunta:"Qual cientista propôs a teoria da evolução?", opcoes:["Isaac Newton","Charles Darwin","Albert Einstein","Galileu Galilei"], correta:1 }
+      ]
+    }
+  },
+  historia: {
+    titulo:"História", icone:"🏺",
+    niveis:{
+      facil:[
+        { pergunta:"Quem chegou ao Brasil em 1500, dando início à colonização portuguesa?", opcoes:["Pedro Álvares Cabral","Cristóvão Colombo","Vasco da Gama","Fernão de Magalhães"], correta:0 },
+        { pergunta:"Em que ano os portugueses chegaram ao Brasil?", opcoes:["1500","1822","1888","1600"], correta:0 },
+        { pergunta:"Qual é a data da Independência do Brasil?", opcoes:["7 de setembro","15 de novembro","21 de abril","13 de maio"], correta:0 }
+      ],
+      medio:[
+        { pergunta:"O que aconteceu no Brasil em 1888?", opcoes:["A Independência","A Proclamação da República","A abolição da escravidão","O Descobrimento"], correta:2 },
+        { pergunta:"Quem foi o primeiro presidente do Brasil?", opcoes:["Dom Pedro II","Deodoro da Fonseca","Getúlio Vargas","Juscelino Kubitschek"], correta:1 },
+        { pergunta:"O que foi a Revolução Industrial?", opcoes:["Uma guerra","Um período de grandes mudanças na produção","Uma eleição","Um tratado de paz"], correta:1 }
+      ],
+      dificil:[
+        { pergunta:"Em que ano começou a Segunda Guerra Mundial?", opcoes:["1914","1939","1945","1929"], correta:1 },
+        { pergunta:"Quem foi Tiradentes?", opcoes:["Um rei português","Um líder da Inconfidência Mineira","Um pintor","Um explorador"], correta:1 },
+        { pergunta:"O que foi a Revolução Francesa?", opcoes:["Um movimento popular que derrubou a monarquia na França","Uma guerra entre Brasil e França","Um tratado comercial","Uma invenção científica"], correta:0 }
+      ]
+    }
+  },
+  geografia: {
+    titulo:"Geografia", icone:"🌎",
+    niveis:{
+      facil:[
+        { pergunta:"Qual é a capital do Brasil?", opcoes:["São Paulo","Rio de Janeiro","Brasília","Salvador"], correta:2 },
+        { pergunta:"Em qual continente fica o Brasil?", opcoes:["América","Europa","África","Ásia"], correta:0 },
+        { pergunta:"Qual é o maior rio do Brasil?", opcoes:["Rio Tietê","Rio Amazonas","Rio São Francisco","Rio Paraná"], correta:1 }
+      ],
+      medio:[
+        { pergunta:"Qual é o maior país do mundo em território?", opcoes:["China","Estados Unidos","Rússia","Canadá"], correta:2 },
+        { pergunta:"Quantas unidades federativas (estados + Distrito Federal) tem o Brasil?", opcoes:["24","26","27","30"], correta:2 },
+        { pergunta:"Qual oceano banha o litoral brasileiro?", opcoes:["Pacífico","Atlântico","Índico","Ártico"], correta:1 }
+      ],
+      dificil:[
+        { pergunta:"Qual é a cordilheira mais extensa do mundo?", opcoes:["Himalaia","Andes","Alpes","Montanhas Rochosas"], correta:1 },
+        { pergunta:"Qual é considerado o deserto mais árido do mundo?", opcoes:["Saara","Deserto do Atacama","Deserto de Gobi","Deserto da Arábia"], correta:1 },
+        { pergunta:"Qual linha imaginária divide a Terra em hemisfério norte e sul?", opcoes:["Meridiano de Greenwich","Linha do Equador","Trópico de Câncer","Trópico de Capricórnio"], correta:1 }
+      ]
+    }
+  },
+  artes: {
+    titulo:"Artes", icone:"🖌️",
+    niveis:{
+      facil:[
+        { pergunta:"Quais são as cores primárias?", opcoes:["Verde, laranja e roxo","Azul, vermelho e amarelo","Preto, branco e cinza","Rosa, marrom e verde"], correta:1 },
+        { pergunta:"O que é um autorretrato?", opcoes:["Uma pintura de paisagem","Um desenho de um animal","Uma obra em que o artista retrata a si mesmo","Uma escultura de pedra"], correta:2 },
+        { pergunta:"Qual instrumento tem cordas e é tocado com um arco?", opcoes:["Flauta","Violino","Tambor","Piano"], correta:1 }
+      ],
+      medio:[
+        { pergunta:"Quem pintou a obra \"A Noite Estrelada\"?", opcoes:["Pablo Picasso","Vincent van Gogh","Salvador Dalí","Claude Monet"], correta:1 },
+        { pergunta:"O que é escultura?", opcoes:["Uma técnica de pintura em telas","Arte tridimensional feita em materiais como pedra ou metal","Um tipo de música","Um estilo de dança"], correta:1 },
+        { pergunta:"O que são cores complementares?", opcoes:["Cores que ficam próximas no círculo cromático","Cores opostas no círculo cromático","Apenas tons de cinza","Cores que não existem juntas"], correta:1 }
+      ],
+      dificil:[
+        { pergunta:"Qual movimento artístico é conhecido por retratar sonhos e o inconsciente?", opcoes:["Impressionismo","Surrealismo","Barroco","Realismo"], correta:1 },
+        { pergunta:"Quem foi Tarsila do Amaral?", opcoes:["Uma cantora brasileira","Uma pintora modernista brasileira","Uma escritora portuguesa","Uma escultora italiana"], correta:1 },
+        { pergunta:"O que caracteriza o movimento Impressionista?", opcoes:["Uso de cores e pinceladas para capturar a luz e o momento","Pinturas exclusivamente em preto e branco","Esculturas em bronze","Fotografias em preto e branco"], correta:0 }
+      ]
+    }
+  }
+};
+
+const NOMES_NIVEL = { facil:"Fácil", medio:"Médio", dificil:"Difícil" };
+
+/* =========================================================================
+   ESTADO
+   ========================================================================= */
+let assuntoAtual = null;
+let nivelAtual = null;
+let perguntasAtual = [];
+let indiceAtual = 0;
+let acertos = 0;
+
+function irPara(idTela){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(idTela).classList.add('active');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function getParam(nome){
+  return new URLSearchParams(window.location.search).get(nome);
+}
+
+function embaralhar(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+/* =========================================================================
+   FLUXO: seleção de assunto → (nível) → quiz → resultado
+   ========================================================================= */
+function selecionarAssunto(chave){
+  const quiz = QUIZZES[chave];
+  if(!quiz) return;
+  assuntoAtual = chave;
+  nivelAtual = null;
+
+  if(quiz.semNivel){
+    iniciarQuiz(quiz.perguntas);
+  } else {
+    document.getElementById('nivel-eyebrow').textContent = `${quiz.icone} ${quiz.titulo}`;
+    document.getElementById('nivel-titulo').textContent = `Escolha o nível de ${quiz.titulo}`;
+    irPara('tela-nivel');
+  }
+}
+
+function escolherNivel(nivel){
+  nivelAtual = nivel;
+  const quiz = QUIZZES[assuntoAtual];
+  iniciarQuiz(quiz.niveis[nivel]);
+}
+
+function iniciarQuiz(perguntas){
+  perguntasAtual = embaralhar(perguntas);
+  indiceAtual = 0;
+  acertos = 0;
+  irPara('tela-quiz');
+  mostrarPerguntaQuiz();
+}
+
+function tituloAssuntoComNivel(){
+  const quiz = QUIZZES[assuntoAtual];
+  let texto = `${quiz.icone} ${quiz.titulo}`;
+  if(nivelAtual) texto += ` · Nível ${NOMES_NIVEL[nivelAtual]}`;
+  return texto;
+}
+
+function mostrarPerguntaQuiz(){
+  const p = perguntasAtual[indiceAtual];
+  document.getElementById('quiz-categoria-tag').textContent = tituloAssuntoComNivel();
+  document.getElementById('quiz-pergunta-txt').textContent = p.pergunta;
+  document.getElementById('quiz-progresso-txt').textContent = `Pergunta ${indiceAtual+1} de ${perguntasAtual.length}`;
+  document.getElementById('quiz-barra-fill').style.width = `${(indiceAtual/perguntasAtual.length)*100}%`;
+  document.getElementById('quiz-btn-proxima-wrap').style.display = 'none';
+
+  const container = document.getElementById('quiz-opcoes-lista');
+  container.innerHTML = '';
+  p.opcoes.forEach((opcao, idx)=>{
+    const btn = document.createElement('button');
+    btn.className = 'resposta-btn';
+    btn.textContent = opcao;
+    btn.onclick = () => responderQuiz(idx);
+    container.appendChild(btn);
+  });
+}
+
+function responderQuiz(idxEscolhido){
+  const p = perguntasAtual[indiceAtual];
+  const botoes = document.querySelectorAll('#quiz-opcoes-lista .resposta-btn');
+
+  botoes.forEach((btn, idx)=>{
+    btn.disabled = true;
+    if(idx === p.correta) btn.classList.add('correta');
+    else if(idx === idxEscolhido) btn.classList.add('errada');
+  });
+
+  if(idxEscolhido === p.correta) acertos++;
+
+  document.getElementById('quiz-barra-fill').style.width = `${((indiceAtual+1)/perguntasAtual.length)*100}%`;
+
+  const btnProxima = document.getElementById('quiz-btn-proxima');
+  btnProxima.textContent = (indiceAtual+1 >= perguntasAtual.length) ? 'Ver resultado →' : 'Próxima pergunta →';
+  document.getElementById('quiz-btn-proxima-wrap').style.display = 'flex';
+}
+
+function proximaPerguntaQuiz(){
+  indiceAtual++;
+  if(indiceAtual >= perguntasAtual.length){
+    mostrarResultado();
+  } else {
+    mostrarPerguntaQuiz();
+  }
+}
+
+function mostrarResultado(){
+  const total = perguntasAtual.length;
+  const percentual = Math.round((acertos/total)*100);
+
+  let medalha = '🥉', titulo = 'Bom trabalho!', mensagem = 'Você está no caminho certo, continue estudando!';
+  if(percentual === 100){ medalha='🏆'; titulo='Perfeito!'; mensagem='Você acertou tudo! Uau, mandou muito bem!'; }
+  else if(percentual >= 66){ medalha='🥇'; titulo='Muito bem!'; mensagem='Você mandou muito bem nesse quiz!'; }
+  else if(percentual >= 33){ medalha='🥈'; titulo='Quase lá!'; mensagem='Você foi bem, mas ainda dá pra melhorar!'; }
+
+  document.getElementById('resultado-medalha').textContent = medalha;
+  document.getElementById('resultado-titulo').textContent = titulo;
+  document.getElementById('resultado-nota').textContent = `${acertos}/${total}`;
+  document.getElementById('resultado-mensagem').textContent = mensagem;
+
+  irPara('tela-resultado');
+  if(percentual >= 66) dispararConfete();
+}
+
+function tentarNovamente(){
+  const quiz = QUIZZES[assuntoAtual];
+  const perguntas = nivelAtual ? quiz.niveis[nivelAtual] : quiz.perguntas;
+  iniciarQuiz(perguntas);
+}
+
+function voltarAoMenu(){
+  assuntoAtual = null;
+  nivelAtual = null;
+  history.replaceState(null, '', 'quizes.html');
+  irPara('tela-menu-assuntos');
+}
+
+function dispararConfete(){
+  const cores = ['#ff6f59','#3dbfae','#ffc94d','#8e7cff','#ff8fc9'];
+  for(let i=0;i<24;i++){
+    const c = document.createElement('div');
+    c.className = 'confete';
+    c.style.left = Math.random()*100+'vw';
+    c.style.width = (6+Math.random()*6)+'px';
+    c.style.height = c.style.width;
+    c.style.background = cores[Math.floor(Math.random()*cores.length)];
+    c.style.transition = `transform ${1.2+Math.random()}s ease-in, opacity 1.6s ease-in`;
+    document.body.appendChild(c);
+    requestAnimationFrame(()=>{
+      c.style.transform = `translateY(${60+Math.random()*30}vh) rotate(${Math.random()*360}deg)`;
+      c.style.opacity = '0';
+    });
+    setTimeout(()=>c.remove(), 2000);
+  }
+}
+
+/* =========================================================================
+   INICIALIZAÇÃO — se a URL vier com ?assunto=xxx (link vindo da home),
+   pula direto para aquele assunto. Caso contrário, mostra o menu completo.
+   ========================================================================= */
+(function inicializar(){
+  const assuntoParam = getParam('assunto');
+  if(assuntoParam && QUIZZES[assuntoParam]){
+    selecionarAssunto(assuntoParam);
+  } else {
+    irPara('tela-menu-assuntos');
+  }
+})();
+</script>
+</body>
+</html>
