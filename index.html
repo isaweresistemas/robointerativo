@@ -278,12 +278,6 @@
   .stat-num{ font-family:'Baloo 2',sans-serif; font-size:1.6rem; color:var(--coral); font-weight:800; }
   .stat-label{ font-size:.78rem; color:var(--ink-soft); font-family:'Baloo 2',sans-serif; }
 
-  .proximo-colega-aviso{
-    margin-top:16px; text-align:center; font-family:'Baloo 2',sans-serif; font-weight:700;
-    font-size:.9rem; color:var(--mint-dark); background:#e8faf6; border-radius:100px;
-    padding:10px 18px;
-  }
-
   footer{
     text-align:center; font-size:.78rem; color:#9b93bf; margin-top:18px; font-family:'Baloo 2',sans-serif;
   }
@@ -421,10 +415,6 @@
       </div>
 
       <p style="margin-top:16px;"><a href="#" class="link-discreto" onclick="irPara('tela-professor-login'); return false;">🔒 Área do professor</a></p>
-
-      <button class="btn btn-primary btn-block" style="margin-top:10px; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="window.RoboKiosk.ativar()">
-        🖥️ Modo Público (Tela Cheia)
-      </button>
     </div>
     <footer>
       Versão 2 · Conversar, Quizzes, Dicionário e Jogos<br>
@@ -638,13 +628,9 @@
       <p style="margin-top:18px; text-align:center; font-family:'Baloo 2',sans-serif; color:var(--ink);" id="msg-incentivo"></p>
     </div>
 
-    <div class="proximo-colega-aviso">
-      🙌 Chame o próximo colega! Voltando ao início em <span id="proximo-colega-contagem">15</span>s...
-    </div>
-
     <div class="btn-row">
       <button class="btn btn-secondary" onclick="window.print()">🖨️ Imprimir certificado</button>
-      <button class="btn btn-primary" style="flex:2;" onclick="reiniciar()">Chamar o próximo colega →</button>
+      <button class="btn btn-primary" style="flex:2;" onclick="reiniciar()">Começar de novo</button>
     </div>
   </section>
 
@@ -984,7 +970,7 @@ let filaPerguntas = [];
 let indiceAtual = 0;
 let respostas = [];
 let elogiosDisponiveis = [];
-const QTD_PERGUNTAS_SESSAO = 3;
+const QTD_PERGUNTAS_SESSAO = 15;
 
 function irPara(idTela){
   document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
@@ -1159,32 +1145,13 @@ function finalizarSessao(){
   document.getElementById('stat-categorias').textContent = categoriasUnicas;
 
   let medalha = '🥉', mensagem = 'Você deu um ótimo primeiro passo nessa jornada de escrita!';
-  if(totalPalavras >= 30){ medalha = '🥇'; mensagem = 'Uau! Você escreveu com o coração e mostrou muita dedicação!'; }
-  else if(totalPalavras >= 15){ medalha = '🥈'; mensagem = 'Muito bem! Suas respostas foram cheias de ideias interessantes!'; }
+  if(totalPalavras >= 150){ medalha = '🥇'; mensagem = 'Uau! Você escreveu com o coração e mostrou muita dedicação!'; }
+  else if(totalPalavras >= 80){ medalha = '🥈'; mensagem = 'Muito bem! Suas respostas foram cheias de ideias interessantes!'; }
   document.getElementById('medalha-final').textContent = medalha;
   document.getElementById('cert-mensagem').textContent = `Concluiu a jornada de perguntas com o Robô Beep, respondendo com muita dedicação!`;
   document.getElementById('msg-incentivo').textContent = mensagem + ' Continue escrevendo, cada palavra sua é única. 💛';
 
   irPara('tela-final');
-  iniciarContagemProximoColega(15);
-}
-
-/* ---------- Retorno automático ao início, para chamar o próximo colega ---------- */
-let timerProximoColega = null;
-function iniciarContagemProximoColega(segundos){
-  if(timerProximoColega){ clearInterval(timerProximoColega); timerProximoColega = null; }
-  let restante = segundos;
-  const el = document.getElementById('proximo-colega-contagem');
-  if(el) el.textContent = restante;
-  timerProximoColega = setInterval(()=>{
-    restante--;
-    if(el) el.textContent = Math.max(restante, 0);
-    if(restante <= 0){
-      clearInterval(timerProximoColega);
-      timerProximoColega = null;
-      reiniciar();
-    }
-  }, 1000);
 }
 
 /* ---------- PERSISTÊNCIA LOCAL (base para o painel do professor na v2) ---------- */
@@ -1204,7 +1171,6 @@ function salvarNoBanco(){
 }
 
 function reiniciar(){
-  if(timerProximoColega){ clearInterval(timerProximoColega); timerProximoColega = null; }
   aluno = null;
   respostas = [];
   filaPerguntas = [];
@@ -1511,6 +1477,5 @@ function limparSessoes(){
 garantirSenhaPadrao();
 iniciarAnimacoesRoboInicial();
 </script>
-<script src="kiosk.js"></script>
 </body>
 </html>
