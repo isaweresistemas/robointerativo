@@ -415,6 +415,10 @@
       </div>
 
       <p style="margin-top:16px;"><a href="#" class="link-discreto" onclick="irPara('tela-professor-login'); return false;">🔒 Área do professor</a></p>
+
+      <button class="btn btn-primary btn-block" style="margin-top:10px; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="window.RoboKiosk.ativar()">
+        🖥️ Modo Público (Tela Cheia)
+      </button>
     </div>
     <footer>
       Versão 2 · Conversar, Quizzes, Dicionário e Jogos<br>
@@ -1477,5 +1481,6 @@ function limparSessoes(){
 garantirSenhaPadrao();
 iniciarAnimacoesRoboInicial();
 </script>
+<script src="kiosk.js"></script>
 </body>
 </html>
