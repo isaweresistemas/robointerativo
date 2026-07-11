@@ -1,0 +1,1486 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Robô Escolar — Versão 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --sky-1:#eaf4ff;
+    --sky-2:#f3ecff;
+    --ink:#2e294e;
+    --ink-soft:#5b5480;
+    --coral:#ff6f59;
+    --coral-dark:#e8543d;
+    --mint:#3dbfae;
+    --mint-dark:#2c9c8d;
+    --sun:#ffc94d;
+    --card:#ffffff;
+    --card-line:#eae6f7;
+    --shadow: 0 18px 40px -18px rgba(46,41,78,.25);
+    --radius: 26px;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:'Nunito',sans-serif;
+    color:var(--ink);
+    background:
+      radial-gradient(circle at 12% 18%, #ffe9c9 0%, transparent 40%),
+      radial-gradient(circle at 88% 12%, #d6f3ff 0%, transparent 38%),
+      radial-gradient(circle at 85% 88%, #ffd6e6 0%, transparent 42%),
+      linear-gradient(160deg, var(--sky-1), var(--sky-2));
+    overflow-x:hidden;
+    position:relative;
+  }
+  .bg-blob{
+    position:fixed; border-radius:50%; opacity:.5; filter:blur(2px);
+    animation: float 9s ease-in-out infinite;
+    pointer-events:none;
+  }
+  @keyframes float{
+    0%,100%{ transform: translateY(0) rotate(0deg); }
+    50%{ transform: translateY(-22px) rotate(8deg); }
+  }
+  .star{ font-size:28px; opacity:.35; }
+  #stage{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:28px 16px;
+    position:relative;
+    z-index:1;
+  }
+  .screen{ width:100%; max-width:640px; display:none; animation: pop .45s ease; }
+  .screen.active{ display:block; }
+  @keyframes pop{
+    from{ opacity:0; transform: translateY(18px) scale(.98); }
+    to{ opacity:1; transform: translateY(0) scale(1); }
+  }
+  .card{
+    background:var(--card);
+    border-radius:var(--radius);
+    box-shadow: var(--shadow);
+    border:1px solid var(--card-line);
+    padding:36px 32px;
+  }
+  h1,h2,h3{ font-family:'Baloo 2',sans-serif; margin:0 0 6px; line-height:1.15; }
+  h1{ font-size:2rem; color:var(--ink); }
+  h2{ font-size:1.5rem; }
+  p{ line-height:1.55; color:var(--ink-soft); }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'Baloo 2',sans-serif; font-weight:700; font-size:.78rem;
+    letter-spacing:.08em; text-transform:uppercase; color:var(--mint-dark);
+    background:#e8faf6; padding:6px 14px; border-radius:100px; margin-bottom:14px;
+  }
+
+  /* ---------- ROBO (elemento assinatura) ---------- */
+  .robo-wrap{ display:flex; justify-content:center; margin:6px 0 18px; }
+  .robo{ width:150px; height:150px; position:relative; animation: bob 3.4s ease-in-out infinite; }
+  @keyframes bob{ 0%,100%{transform:translateY(0);} 50%{transform:translateY(-9px);} }
+  .robo .antena{
+    position:absolute; top:-22px; left:50%; transform:translateX(-50%);
+    width:6px; height:26px; background:var(--ink); border-radius:4px;
+  }
+  .robo .antena::after{
+    content:''; position:absolute; top:-11px; left:50%; transform:translateX(-50%);
+    width:16px; height:16px; border-radius:50%; background:var(--coral);
+    box-shadow:0 0 0 0 rgba(255,111,89,.5);
+    animation: pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%{ box-shadow:0 0 0 0 rgba(255,111,89,.45);}
+    70%{ box-shadow:0 0 0 10px rgba(255,111,89,0);}
+    100%{ box-shadow:0 0 0 0 rgba(255,111,89,0);}
+  }
+  .robo .cabeca{
+    position:absolute; top:6px; left:50%; transform:translateX(-50%);
+    width:140px; height:110px; background:linear-gradient(160deg,#fff,#eef2ff);
+    border-radius:34px; border:4px solid var(--ink);
+    box-shadow: inset 0 -6px 0 rgba(46,41,78,.06);
+  }
+  .robo .visor{
+    position:absolute; top:24px; left:50%; transform:translateX(-50%);
+    width:104px; height:52px; background:var(--ink); border-radius:20px;
+    display:flex; align-items:center; justify-content:space-around; padding:0 14px;
+  }
+  .robo .olho{
+    width:16px; height:16px; border-radius:50%; background:var(--mint);
+    animation: piscar 4.2s infinite;
+  }
+  @keyframes piscar{
+    0%,92%,100%{ transform:scaleY(1); }
+    95%{ transform:scaleY(.12); }
+  }
+  .robo .boca{
+    position:absolute; bottom:20px; left:50%; transform:translateX(-50%);
+    width:46px; height:10px; background:var(--sun); border-radius:0 0 10px 10px;
+  }
+  .robo.falando .boca{ animation: falar .5s ease-in-out infinite; }
+  @keyframes falar{
+    0%,100%{ height:10px; } 50%{ height:18px; }
+  }
+  .robo .orelha{
+    position:absolute; top:44px; width:10px; height:26px; background:var(--ink);
+    border-radius:6px;
+  }
+  .robo .orelha.esq{ left:-2px; } .robo .orelha.dir{ right:-2px; }
+
+  /* Robô maior na tela inicial */
+  .robo-grande{ width:180px; height:150px; transform-origin:bottom center; }
+  .robo-grande .antena{ top:-24px; }
+  .robo-grande .cabeca{ width:170px; height:132px; top:8px; }
+  .robo-grande .visor{ width:126px; height:62px; top:28px; }
+  .robo-grande .olho{ width:20px; height:20px; }
+  .robo-grande .boca{ width:56px; height:12px; bottom:24px; }
+  .robo-grande .orelha{ width:12px; height:32px; top:52px; }
+
+  /* Riu! (piscar de alegria: olhos viram arcos, boca abre em sorriso largo) */
+  .robo.rindo .olho{
+    height:5px !important; border-radius:5px !important; background:var(--sun) !important;
+    transform:none !important; animation:none !important;
+  }
+  .robo.rindo .boca{
+    width:72px !important; height:28px !important; border-radius:0 0 36px 36px !important;
+    animation:none !important;
+  }
+  .robo.rindo{ animation: risada .5s ease; }
+  @keyframes risada{
+    0%,100%{ transform:translateY(-9px) rotate(0deg); }
+    25%{ transform:translateY(-9px) rotate(-3deg); }
+    75%{ transform:translateY(-9px) rotate(3deg); }
+  }
+
+  /* ---------- MENU DE OPÇÕES (tela inicial) ---------- */
+  .menu-opcoes{
+    display:flex; flex-direction:column; gap:12px; margin-top:20px; text-align:left;
+  }
+  .opcao-card{
+    display:flex; align-items:center; gap:14px; width:100%;
+    background:#f7f5ff; border:2px solid var(--card-line); border-radius:18px;
+    padding:14px 16px; cursor:pointer; font-family:'Nunito',sans-serif;
+    transition:.15s transform, .15s border-color, .15s background;
+    text-align:left;
+  }
+  .opcao-card:hover{ border-color:var(--mint); background:#eefaf7; transform:translateY(-2px); }
+  .opcao-card:active{ transform:translateY(0); }
+  .opcao-icone{ font-size:1.9rem; line-height:1; flex-shrink:0; }
+  .opcao-titulo{
+    display:block; font-family:'Baloo 2',sans-serif; font-weight:700; font-size:1.02rem; color:var(--ink);
+  }
+  .opcao-desc{ display:block; font-size:.8rem; color:var(--ink-soft); margin-top:2px; }
+  .opcao-conversar{ border-color:#ffd9cf; }
+  .opcao-dicionario{ border-color:#cfeaff; }
+  .opcao-jogos{ border-color:#dcffe0; }
+  .opcao-quiz{ border-color:#f0e2ff; }
+
+  /* Grade de assuntos no menu principal */
+  .menu-grade{
+    display:grid; grid-template-columns:1fr 1fr; gap:10px;
+  }
+  .menu-grade .opcao-card{ flex-direction:column; text-align:center; gap:6px; padding:16px 8px; }
+  .menu-grade .opcao-icone{ font-size:1.9rem; }
+  .menu-grade .opcao-titulo{ font-size:.88rem; }
+  @media (max-width:420px){ .menu-grade{ grid-template-columns:1fr; } }
+
+  .secao-titulo{
+    font-family:'Baloo 2',sans-serif; font-weight:700; font-size:.82rem; letter-spacing:.04em;
+    color:var(--ink-soft); text-transform:uppercase; margin:22px 0 10px; text-align:left;
+  }
+
+  footer a{ color:var(--mint-dark); }
+
+  /* Grade de jogos: cards centralizados sem descrição */
+  #tela-jogos .menu-opcoes{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  #tela-jogos .opcao-card{ flex-direction:column; text-align:center; gap:8px; padding:18px 10px; }
+  #tela-jogos .opcao-icone{ font-size:2.2rem; }
+  @media (max-width:420px){ #tela-jogos .menu-opcoes{ grid-template-columns:1fr; } }
+
+  .balao{
+    position:relative; background:#fff; border:3px solid var(--ink);
+    border-radius:20px; padding:16px 18px; margin-top:6px; font-family:'Baloo 2',sans-serif;
+    font-size:1.08rem; color:var(--ink); text-align:center;
+  }
+  .balao::before{
+    content:''; position:absolute; top:-14px; left:50%; transform:translateX(-50%) rotate(45deg);
+    width:22px; height:22px; background:#fff; border-left:3px solid var(--ink); border-top:3px solid var(--ink);
+  }
+
+  /* ---------- FORM ---------- */
+  label{ display:block; font-family:'Baloo 2',sans-serif; font-weight:600; font-size:.92rem; margin:16px 0 6px; color:var(--ink); }
+  input[type=text], input[type=number], select, textarea{
+    width:100%; padding:13px 15px; border-radius:14px; border:2px solid var(--card-line);
+    font-family:'Nunito',sans-serif; font-size:1rem; color:var(--ink); background:#fbfaff;
+    transition:.15s border-color;
+  }
+  input:focus, select:focus, textarea:focus{ outline:none; border-color:var(--mint); background:#fff; }
+  textarea{ resize:vertical; min-height:110px; }
+  .hint{ font-size:.8rem; color:#9b93bf; margin-top:4px; }
+
+  .btn{
+    font-family:'Baloo 2',sans-serif; font-weight:700; font-size:1rem;
+    border:none; border-radius:100px; padding:14px 26px; cursor:pointer;
+    transition:.15s transform, .15s box-shadow; box-shadow:0 8px 0 rgba(0,0,0,.08);
+  }
+  .btn:active{ transform:translateY(3px); box-shadow:0 4px 0 rgba(0,0,0,.08); }
+  .btn-primary{ background:var(--coral); color:#fff; }
+  .btn-primary:hover{ background:var(--coral-dark); }
+  .btn-secondary{ background:#fff; color:var(--ink); border:2px solid var(--card-line); }
+  .btn-secondary:hover{ border-color:var(--mint); }
+  .btn-row{ display:flex; gap:12px; margin-top:24px; flex-wrap:wrap; }
+  .btn-row .btn{ flex:1; min-width:140px; }
+  .btn-block{ width:100%; }
+
+  /* ---------- PROGRESSO ---------- */
+  .progresso-wrap{ margin-bottom:18px; }
+  .progresso-barra{ height:12px; background:#eee7ff; border-radius:100px; overflow:hidden; }
+  .progresso-fill{ height:100%; background:linear-gradient(90deg,var(--mint),var(--coral)); border-radius:100px; transition:width .4s ease; }
+  .progresso-txt{ font-family:'Baloo 2',sans-serif; font-size:.82rem; color:var(--ink-soft); margin-top:6px; text-align:right; }
+
+  .categoria-tag{
+    display:inline-block; background:#fff3e2; color:#c07a1f; font-family:'Baloo 2',sans-serif;
+    font-weight:700; font-size:.78rem; padding:5px 13px; border-radius:100px; margin-bottom:10px;
+  }
+  .pergunta-txt{ font-family:'Baloo 2',sans-serif; font-size:1.32rem; margin:8px 0 18px; color:var(--ink); }
+
+  /* ---------- ELOGIO OVERLAY ---------- */
+  #elogio-overlay{
+    display:none; position:fixed; inset:0; background:rgba(46,41,78,.45);
+    align-items:center; justify-content:center; z-index:50; padding:20px;
+  }
+  #elogio-overlay.active{ display:flex; }
+  .elogio-card{
+    background:#fff; border-radius:24px; padding:34px 30px; max-width:420px; text-align:center;
+    box-shadow:var(--shadow); animation:elogioPop .4s cubic-bezier(.2,1.4,.4,1);
+  }
+  @keyframes elogioPop{ from{ transform:scale(.6); opacity:0;} to{ transform:scale(1); opacity:1;} }
+  .elogio-emoji{ font-size:3rem; margin-bottom:10px; }
+  .elogio-texto{ font-family:'Baloo 2',sans-serif; font-size:1.25rem; color:var(--ink); margin-bottom:20px; }
+
+  .confete{ position:fixed; top:-10px; border-radius:2px; z-index:60; pointer-events:none; }
+
+  /* ---------- CERTIFICADO / FINAL ---------- */
+  .certificado{
+    border:4px double var(--sun); border-radius:20px; padding:28px 22px; text-align:center;
+    background:linear-gradient(180deg,#fffdf6,#fff);
+  }
+  .medalha{ font-size:4rem; margin:8px 0; }
+  .stat-row{ display:flex; gap:12px; margin-top:18px; flex-wrap:wrap; }
+  .stat-box{
+    flex:1; min-width:120px; background:#f7f5ff; border-radius:16px; padding:14px; text-align:center;
+  }
+  .stat-num{ font-family:'Baloo 2',sans-serif; font-size:1.6rem; color:var(--coral); font-weight:800; }
+  .stat-label{ font-size:.78rem; color:var(--ink-soft); font-family:'Baloo 2',sans-serif; }
+
+  footer{
+    text-align:center; font-size:.78rem; color:#9b93bf; margin-top:18px; font-family:'Baloo 2',sans-serif;
+  }
+  .link-discreto{
+    color:var(--ink-soft); font-size:.8rem; text-decoration:none; font-family:'Baloo 2',sans-serif;
+  }
+  .link-discreto:hover{ color:var(--coral); }
+
+  /* ---------- PAINEL DO PROFESSOR ---------- */
+  .tabs{ display:flex; gap:8px; flex-wrap:wrap; margin:18px 0 20px; }
+  .tab-btn{
+    padding:10px 16px; border-radius:100px; border:2px solid var(--card-line); background:#fff;
+    font-family:'Baloo 2',sans-serif; font-weight:700; cursor:pointer; font-size:.82rem; color:var(--ink);
+    transition:.15s all;
+  }
+  .tab-btn.active{ background:var(--ink); color:#fff; border-color:var(--ink); }
+  .tab-btn:hover:not(.active){ border-color:var(--mint); }
+  .tab-content{ display:none; }
+  .tab-content.active{ display:block; animation:pop .3s ease; }
+
+  .lista-perguntas{
+    display:flex; flex-direction:column; gap:10px; max-height:400px; overflow-y:auto; padding-right:4px; margin-top:14px;
+  }
+  .pergunta-item{
+    display:flex; align-items:center; gap:6px; background:#f7f5ff; border-radius:14px; padding:10px 12px;
+  }
+  .pergunta-item .texto{ flex:1; font-size:.9rem; color:var(--ink); }
+  .icon-btn{
+    background:#fff; border:1px solid var(--card-line); border-radius:10px; width:32px; height:32px;
+    min-width:32px; cursor:pointer; font-size:.85rem; display:flex; align-items:center; justify-content:center;
+    transition:.15s border-color;
+  }
+  .icon-btn:hover{ border-color:var(--mint); }
+
+  .painel-header{
+    display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:6px;
+  }
+  .upload-btn{
+    display:inline-block; text-align:center; cursor:pointer;
+  }
+  .sessao-item{
+    background:#f7f5ff; border-radius:14px; padding:10px 12px; margin-bottom:8px;
+  }
+  #erro-senha{ display:none; margin-top:8px; }
+
+  @media print{
+    body *{ visibility:hidden; }
+    #certificado-print, #certificado-print *{ visibility:visible; }
+    #certificado-print{ position:absolute; top:0; left:0; width:100%; }
+  }
+
+  @media (max-width:480px){
+    .card{ padding:26px 20px; }
+    h1{ font-size:1.6rem; }
+    .pergunta-txt{ font-size:1.12rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="bg-blob star" style="top:8%; left:6%;">✨</div>
+<div class="bg-blob star" style="top:70%; left:4%; animation-delay:1.2s;">⭐</div>
+<div class="bg-blob star" style="top:16%; right:7%; animation-delay:2s;">🌟</div>
+<div class="bg-blob star" style="bottom:8%; right:9%; animation-delay:.6s;">✨</div>
+
+<div id="stage">
+
+  <!-- ====================== TELA 1: BOAS-VINDAS / MENU ====================== -->
+  <section class="screen active" id="tela-boasvindas">
+    <div class="card" style="text-align:center;">
+      <span class="eyebrow">🤖 Robô Escolar</span>
+      <div class="robo-wrap"><div class="robo robo-grande falando" id="robo-boasvindas">
+        <div class="antena"></div>
+        <div class="cabeca">
+          <div class="orelha esq"></div><div class="orelha dir"></div>
+          <div class="visor"><div class="olho" id="olho-esq-boasvindas"></div><div class="olho" id="olho-dir-boasvindas"></div></div>
+          <div class="boca"></div>
+        </div>
+      </div></div>
+      <h1>Oi! Eu sou o Beep! 👋</h1>
+      <div class="balao" style="margin-bottom:6px;">Escolha um assunto:</div>
+
+      <div class="menu-opcoes">
+        <button class="opcao-card opcao-conversar" onclick="irPara('tela-cadastro')">
+          <span class="opcao-icone">💬</span>
+          <span class="opcao-titulo">Conversar comigo</span>
+          <span class="opcao-desc">Responda perguntas e ganhe elogios do Beep!</span>
+        </button>
+        <button class="opcao-card opcao-quiz" onclick="location.href='quizes.html?assunto=geral'">
+          <span class="opcao-icone">🧠</span>
+          <span class="opcao-titulo">Conhecimentos Gerais</span>
+          <span class="opcao-desc">Teste o que você sabe em um quiz rápido!</span>
+        </button>
+        <button class="opcao-card opcao-jogos" onclick="irPara('tela-jogos')">
+          <span class="opcao-icone">🎮</span>
+          <span class="opcao-titulo">Jogos</span>
+          <span class="opcao-desc">Jogo da Velha, Memória e muito mais!</span>
+        </button>
+      </div>
+
+      <p class="secao-titulo">Mais opções</p>
+      <div class="menu-opcoes menu-grade">
+        <button class="opcao-card opcao-quiz" onclick="location.href='quizes.html?assunto=matematica'">
+          <span class="opcao-icone">➗</span>
+          <span class="opcao-titulo">Matemática</span>
+        </button>
+        <button class="opcao-card opcao-quiz" onclick="location.href='quizes.html?assunto=ingles'">
+          <span class="opcao-icone">🇬🇧</span>
+          <span class="opcao-titulo">Inglês</span>
+        </button>
+        <button class="opcao-card opcao-quiz" onclick="location.href='quizes.html?assunto=ciencias'">
+          <span class="opcao-icone">🔬</span>
+          <span class="opcao-titulo">Ciências</span>
+        </button>
+        <button class="opcao-card opcao-quiz" onclick="location.href='quizes.html?assunto=historia'">
+          <span class="opcao-icone">🏺</span>
+          <span class="opcao-titulo">História</span>
+        </button>
+        <button class="opcao-card opcao-quiz" onclick="location.href='quizes.html?assunto=geografia'">
+          <span class="opcao-icone">🌎</span>
+          <span class="opcao-titulo">Geografia</span>
+        </button>
+        <button class="opcao-card opcao-quiz" onclick="location.href='quizes.html?assunto=artes'">
+          <span class="opcao-icone">🖌️</span>
+          <span class="opcao-titulo">Artes</span>
+        </button>
+        <button class="opcao-card opcao-dicionario" onclick="irPara('tela-dicionario')">
+          <span class="opcao-icone">📖</span>
+          <span class="opcao-titulo">Dicionário</span>
+        </button>
+        <button class="opcao-card opcao-quiz" onclick="location.href='quizes.html?assunto=empresa'">
+          <span class="opcao-icone">🏢</span>
+          <span class="opcao-titulo">Nossa Empresa</span>
+        </button>
+      </div>
+
+      <p style="margin-top:16px;"><a href="#" class="link-discreto" onclick="irPara('tela-professor-login'); return false;">🔒 Área do professor</a></p>
+
+      <button class="btn btn-primary btn-block" style="margin-top:10px; display:flex; align-items:center; justify-content:center; gap:8px;" onclick="window.RoboKiosk.ativar()">
+        🖥️ Modo Público (Tela Cheia)
+      </button>
+    </div>
+    <footer>
+      Versão 2 · Conversar, Quizzes, Dicionário e Jogos<br>
+      Desenvolvido por <strong>Isawere Sistemas</strong> · conheça mais em
+      <a href="https://www.isaweresistemas.com.br" target="_blank" rel="noopener" class="link-discreto" style="text-decoration:underline;">www.isaweresistemas.com.br</a>
+    </footer>
+  </section>
+
+  <!-- ====================== TELA 1b: DICIONÁRIO (em preparação) ====================== -->
+  <section class="screen" id="tela-dicionario">
+    <div class="card" style="text-align:center;">
+      <div class="robo-wrap"><div class="robo">
+        <div class="antena"></div>
+        <div class="cabeca">
+          <div class="orelha esq"></div><div class="orelha dir"></div>
+          <div class="visor"><div class="olho"></div><div class="olho"></div></div>
+          <div class="boca"></div>
+        </div>
+      </div></div>
+      <span class="eyebrow">📖 Dicionário</span>
+      <h2>Em breve!</h2>
+      <p>Estou preparando um dicionário cheio de palavras novas para você explorar. Assim que estiver pronto, o botão abaixo vai te levar direto para lá.</p>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="irPara('tela-boasvindas')">← Voltar ao menu</button>
+        <button class="btn btn-primary" style="flex:2;" onclick="abrirLink(LINKS_EXTERNOS.dicionario, 'O dicionário')">Abrir dicionário</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== TELA 1c: JOGOS (em preparação) ====================== -->
+  <section class="screen" id="tela-jogos">
+    <div class="card" style="text-align:center;">
+      <div class="robo-wrap"><div class="robo">
+        <div class="antena"></div>
+        <div class="cabeca">
+          <div class="orelha esq"></div><div class="orelha dir"></div>
+          <div class="visor"><div class="olho"></div><div class="olho"></div></div>
+          <div class="boca"></div>
+        </div>
+      </div></div>
+      <span class="eyebrow">🎮 Jogos</span>
+      <h2>Escolha um jogo</h2>
+      <p>Esses jogos ainda estão sendo preparados. Assim que ficarem prontos, é só clicar para jogar!</p>
+
+      <div class="menu-opcoes">
+        <button class="opcao-card opcao-jogo" onclick="abrirLink(LINKS_EXTERNOS.jogos.velha, 'O Jogo da Velha')">
+          <span class="opcao-icone">⭕</span>
+          <span class="opcao-titulo">Jogo da Velha</span>
+        </button>
+        <button class="opcao-card opcao-jogo" onclick="abrirLink(LINKS_EXTERNOS.jogos.memoria, 'O Jogo da Memória')">
+          <span class="opcao-icone">🧠</span>
+          <span class="opcao-titulo">Jogo da Memória</span>
+        </button>
+        <button class="opcao-card opcao-jogo" onclick="abrirLink(LINKS_EXTERNOS.jogos.complete, 'O Jogo de Completar')">
+          <span class="opcao-icone">✏️</span>
+          <span class="opcao-titulo">Complete a Palavra</span>
+        </button>
+        <button class="opcao-card opcao-jogo" onclick="abrirLink(LINKS_EXTERNOS.jogos.mario, 'O Jogo de Plataforma')">
+          <span class="opcao-icone">🍄</span>
+          <span class="opcao-titulo">Aventura (estilo Mario)</span>
+        </button>
+        <button class="opcao-card opcao-jogo" onclick="abrirLink(LINKS_EXTERNOS.jogos.pintar, 'O Pintar')">
+          <span class="opcao-icone">🎨</span>
+          <span class="opcao-titulo">Pintar</span>
+        </button>
+        <button class="opcao-card opcao-jogo" onclick="abrirLink(LINKS_EXTERNOS.jogos.quebraCabeca, 'O Quebra-cabeça')">
+          <span class="opcao-icone">🧩</span>
+          <span class="opcao-titulo">Quebra-cabeça</span>
+        </button>
+        <button class="opcao-card opcao-jogo" onclick="abrirLink(LINKS_EXTERNOS.jogos.investigacao, 'A Investigação')">
+          <span class="opcao-icone">🕵️</span>
+          <span class="opcao-titulo">Investigação</span>
+        </button>
+        <button class="opcao-card opcao-jogo" onclick="abrirLink(LINKS_EXTERNOS.jogos.espacial, 'O Jogo Espacial')">
+          <span class="opcao-icone">🚀</span>
+          <span class="opcao-titulo">Espacial</span>
+        </button>
+        <button class="opcao-card opcao-jogo" onclick="abrirLink(LINKS_EXTERNOS.jogos.cruzadinha, 'A Cruzadinha')">
+          <span class="opcao-icone">📝</span>
+          <span class="opcao-titulo">Cruzadinha</span>
+        </button>
+        <button class="opcao-card opcao-jogo" onclick="abrirLink(LINKS_EXTERNOS.jogos.seteErros, 'O 7 Erros')">
+          <span class="opcao-icone">🔍</span>
+          <span class="opcao-titulo">7 Erros</span>
+        </button>
+        <button class="opcao-card opcao-jogo" onclick="abrirLink(LINKS_EXTERNOS.jogos.futebol, 'O Futebol')">
+          <span class="opcao-icone">⚽</span>
+          <span class="opcao-titulo">Futebol</span>
+        </button>
+        <button class="opcao-card opcao-jogo" onclick="abrirLink(LINKS_EXTERNOS.jogos.alvo, 'O Acerte o Alvo')">
+          <span class="opcao-icone">🎯</span>
+          <span class="opcao-titulo">Acerte o Alvo</span>
+        </button>
+        <button class="opcao-card opcao-jogo" onclick="abrirLink(LINKS_EXTERNOS.jogos.maisJogos, 'Mais jogos')">
+          <span class="opcao-icone">➕</span>
+          <span class="opcao-titulo">Mais jogos em breve</span>
+        </button>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-secondary btn-block" onclick="irPara('tela-boasvindas')">← Voltar ao menu</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== TELA 2: CADASTRO ====================== -->
+
+  <section class="screen" id="tela-cadastro">
+    <div class="card">
+      <span class="eyebrow">👦 Cadastro</span>
+      <h2>Antes de começar, me conta um pouco sobre você!</h2>
+      <p>Assim eu posso te chamar pelo nome durante a nossa conversa.</p>
+
+      <form id="form-cadastro" onsubmit="return salvarCadastro(event)">
+        <label for="in-nome">Nome</label>
+        <input type="text" id="in-nome" placeholder="Como você se chama?" required maxlength="60">
+
+        <label for="in-idade">Idade</label>
+        <input type="number" id="in-idade" placeholder="Quantos anos você tem?" min="3" max="18" required>
+
+        <label for="in-turma">Turma</label>
+        <input type="text" id="in-turma" placeholder="Ex: 3º Ano B" required maxlength="40">
+
+        <label for="in-escola">Escola <span class="hint" style="display:inline;">(opcional)</span></label>
+        <input type="text" id="in-escola" placeholder="Nome da sua escola" maxlength="80">
+
+        <div class="btn-row">
+          <button type="button" class="btn btn-secondary" onclick="irPara('tela-boasvindas')">← Voltar</button>
+          <button type="submit" class="btn btn-primary" style="flex:2;">Continuar →</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- ====================== TELA 3: SAUDAÇÃO ====================== -->
+  <section class="screen" id="tela-saudacao">
+    <div class="card" style="text-align:center;">
+      <div class="robo-wrap"><div class="robo falando">
+        <div class="antena"></div>
+        <div class="cabeca">
+          <div class="orelha esq"></div><div class="orelha dir"></div>
+          <div class="visor"><div class="olho"></div><div class="olho"></div></div>
+          <div class="boca"></div>
+        </div>
+      </div></div>
+      <div class="balao"><span id="txt-saudacao"></span></div>
+      <div class="btn-row">
+        <button class="btn btn-primary btn-block" onclick="iniciarPerguntas()">Vamos lá! 🚀</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ====================== TELA 4: PERGUNTAS ====================== -->
+  <section class="screen" id="tela-perguntas">
+    <div class="card">
+      <div class="progresso-wrap">
+        <div class="progresso-barra"><div class="progresso-fill" id="barra-fill" style="width:0%;"></div></div>
+        <div class="progresso-txt" id="progresso-txt">Pergunta 1 de 15</div>
+      </div>
+
+      <div class="robo-wrap" style="margin-bottom:10px;"><div class="robo" id="robo-pergunta">
+        <div class="antena"></div>
+        <div class="cabeca">
+          <div class="orelha esq"></div><div class="orelha dir"></div>
+          <div class="visor"><div class="olho"></div><div class="olho"></div></div>
+          <div class="boca"></div>
+        </div>
+      </div></div>
+
+      <div style="text-align:center;">
+        <span class="categoria-tag" id="tag-categoria">Categoria</span>
+        <p class="pergunta-txt" id="txt-pergunta">Pergunta...</p>
+      </div>
+
+      <form id="form-resposta" onsubmit="return enviarResposta(event)">
+        <textarea id="in-resposta" placeholder="Escreva sua resposta aqui..." required></textarea>
+        <div class="btn-row">
+          <button type="submit" class="btn btn-primary btn-block">Enviar resposta ✍️</button>
+        </div>
+      </form>
+    </div>
+  </section>
+
+  <!-- ====================== TELA 5: FINAL / CERTIFICADO ====================== -->
+  <section class="screen" id="tela-final">
+    <div class="card" id="certificado-print">
+      <div class="robo-wrap"><div class="robo falando">
+        <div class="antena"></div>
+        <div class="cabeca">
+          <div class="orelha esq"></div><div class="orelha dir"></div>
+          <div class="visor"><div class="olho"></div><div class="olho"></div></div>
+          <div class="boca"></div>
+        </div>
+      </div></div>
+
+      <div class="certificado">
+        <div class="eyebrow" style="background:#fff3e2;color:#c07a1f;">🏆 Certificado de Participação</div>
+        <div class="medalha" id="medalha-final">🥇</div>
+        <h2 id="cert-nome">Nome do Aluno</h2>
+        <p id="cert-turma">Turma</p>
+        <p id="cert-mensagem">Concluiu a jornada de perguntas com o Robô Beep!</p>
+        <p class="hint" id="cert-data"></p>
+      </div>
+
+      <div class="stat-row">
+        <div class="stat-box"><div class="stat-num" id="stat-respondidas">0</div><div class="stat-label">Perguntas respondidas</div></div>
+        <div class="stat-box"><div class="stat-num" id="stat-palavras">0</div><div class="stat-label">Palavras escritas</div></div>
+        <div class="stat-box"><div class="stat-num" id="stat-categorias">0</div><div class="stat-label">Categorias exploradas</div></div>
+      </div>
+
+      <p style="margin-top:18px; text-align:center; font-family:'Baloo 2',sans-serif; color:var(--ink);" id="msg-incentivo"></p>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-secondary" onclick="window.print()">🖨️ Imprimir certificado</button>
+      <button class="btn btn-primary" style="flex:2;" onclick="reiniciar()">Começar de novo</button>
+    </div>
+  </section>
+
+  <!-- ====================== TELA 6: LOGIN DO PROFESSOR ====================== -->
+  <section class="screen" id="tela-professor-login">
+    <div class="card" style="text-align:center;">
+      <span class="eyebrow">🔒 Área do Professor</span>
+      <h2>Digite a senha para entrar</h2>
+      <p>Aqui você pode gerenciar as perguntas, exportar respostas e configurar o sistema.</p>
+      <input type="password" id="in-senha-login" placeholder="Senha" onkeydown="if(event.key==='Enter') tentarLoginProfessor();">
+      <p class="hint" id="erro-senha">Senha incorreta. Tente novamente.</p>
+      <div class="btn-row">
+        <button class="btn btn-secondary" onclick="document.getElementById('in-senha-login').value=''; irPara('tela-boasvindas')">← Voltar</button>
+        <button class="btn btn-primary" style="flex:2;" onclick="tentarLoginProfessor()">Entrar</button>
+      </div>
+      <p class="hint" style="margin-top:16px;">Senha padrão de fábrica: <strong>professor123</strong></p>
+    </div>
+  </section>
+
+  <!-- ====================== TELA 7: PAINEL DO PROFESSOR ====================== -->
+  <section class="screen" id="tela-professor-painel">
+    <div class="card" style="max-width:720px;">
+      <div class="painel-header">
+        <div>
+          <span class="eyebrow">🔒 Painel do Professor</span>
+          <h2 style="margin:0;">Gerenciar o Robô Escolar</h2>
+        </div>
+        <button class="btn btn-secondary" onclick="sairPainelProfessor()">Sair</button>
+      </div>
+
+      <div class="tabs">
+        <button class="tab-btn active" data-tab="tab-perguntas" onclick="mudarTabProfessor('tab-perguntas')">📚 Perguntas</button>
+        <button class="tab-btn" data-tab="tab-dados" onclick="mudarTabProfessor('tab-dados')">💾 Importar/Exportar</button>
+        <button class="tab-btn" data-tab="tab-respostas" onclick="mudarTabProfessor('tab-respostas')">📄 Respostas</button>
+        <button class="tab-btn" data-tab="tab-senha" onclick="mudarTabProfessor('tab-senha')">🔑 Senha</button>
+      </div>
+
+      <!-- TAB PERGUNTAS -->
+      <div class="tab-content active" id="tab-perguntas">
+        <label for="sel-categoria-prof">Categoria</label>
+        <select id="sel-categoria-prof" onchange="renderListaPerguntasProf()"></select>
+        <div class="btn-row" style="margin-top:8px;">
+          <button class="btn btn-secondary" onclick="novaCategoria()">+ Nova categoria</button>
+          <button class="btn btn-secondary" onclick="excluirCategoriaAtual()">🗑️ Excluir categoria</button>
+        </div>
+
+        <div class="lista-perguntas" id="lista-perguntas-prof"></div>
+
+        <label for="in-nova-pergunta" style="margin-top:18px;">Nova pergunta nesta categoria</label>
+        <div style="display:flex; gap:8px;">
+          <input type="text" id="in-nova-pergunta" placeholder="Digite a nova pergunta..." onkeydown="if(event.key==='Enter'){event.preventDefault(); adicionarPergunta();}">
+          <button class="btn btn-primary" onclick="adicionarPergunta()" style="white-space:nowrap;">Adicionar</button>
+        </div>
+      </div>
+
+      <!-- TAB IMPORTAR/EXPORTAR -->
+      <div class="tab-content" id="tab-dados">
+        <h3>Banco de perguntas</h3>
+        <p>Exporte as perguntas para compartilhar com outra turma, ou importe um arquivo pronto.</p>
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="exportarPerguntasJSON()">⬇️ Exportar perguntas (.json)</button>
+          <label class="btn btn-primary upload-btn" style="flex:1;">
+            ⬆️ Importar perguntas
+            <input type="file" accept="application/json" id="in-importar-perguntas" style="display:none;" onchange="importarPerguntasJSON(event)">
+          </label>
+        </div>
+
+        <h3 style="margin-top:26px;">Respostas dos alunos</h3>
+        <p>Exporte todas as respostas já registradas neste computador.</p>
+        <div class="btn-row">
+          <button class="btn btn-secondary" onclick="exportarRespostasJSON()">⬇️ Exportar (.json)</button>
+          <button class="btn btn-secondary" onclick="exportarRespostasCSV()">⬇️ Exportar (.csv)</button>
+        </div>
+      </div>
+
+      <!-- TAB RESPOSTAS -->
+      <div class="tab-content" id="tab-respostas">
+        <h3>Sessões registradas neste computador</h3>
+        <div id="lista-sessoes"></div>
+        <button class="btn btn-secondary" style="margin-top:12px;" onclick="limparSessoes()">🗑️ Apagar todos os registros</button>
+      </div>
+
+      <!-- TAB SENHA -->
+      <div class="tab-content" id="tab-senha">
+        <h3>Alterar senha</h3>
+        <label for="in-senha-atual">Senha atual</label>
+        <input type="password" id="in-senha-atual">
+        <label for="in-senha-nova">Nova senha</label>
+        <input type="password" id="in-senha-nova">
+        <label for="in-senha-confirma">Confirmar nova senha</label>
+        <input type="password" id="in-senha-confirma">
+        <div class="btn-row">
+          <button class="btn btn-primary btn-block" onclick="alterarSenha()">Salvar nova senha</button>
+        </div>
+        <p class="hint" id="msg-senha"></p>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- ====================== OVERLAY DE ELOGIO ====================== -->
+<div id="elogio-overlay">
+  <div class="elogio-card">
+    <div class="elogio-emoji" id="elogio-emoji">🌟</div>
+    <div class="elogio-texto" id="elogio-texto">Muito bem!</div>
+    <button class="btn btn-primary" onclick="fecharElogio()">Próxima pergunta →</button>
+  </div>
+</div>
+
+<script>
+/* =========================================================================
+   BANCO DE PERGUNTAS PADRÃO (semente) — organizado por categoria.
+   O professor pode editar livremente; a cópia de trabalho fica salva em
+   localStorage sob a chave 'roboEscolar_perguntas'.
+   ========================================================================= */
+const BANCO_PERGUNTAS_PADRAO = {
+  "Quem sou eu": [
+    "Qual é o seu nome completo?","Quantos anos você tem?","Quando é o seu aniversário?",
+    "Onde você mora?","Qual é a sua cor favorita?","Qual é o seu prato favorito?",
+    "Você prefere praia ou montanha?","Qual é o seu animal de estimação favorito?",
+    "Você é destro ou canhoto?","Qual é o seu número da sorte?",
+    "Como você descreveria seu jeito de ser em três palavras?","Qual é a sua estação do ano preferida?",
+    "Você prefere dia ou noite?","Qual é o seu maior sonho?","O que te faz único?"
+  ],
+  "Família": [
+    "Quem mora com você?","Você tem irmãos? Quantos?","Como se chama sua mãe?",
+    "Como se chama seu pai?","Você tem avós por perto?","Qual é a comida que sua família mais gosta de fazer junto?",
+    "O que sua família costuma fazer nos fins de semana?","Você tem algum animal de estimação em casa?",
+    "Qual é a sua tradição de família favorita?","Quem te faz rir mais em casa?",
+    "Você ajuda em alguma tarefa em casa?","Qual é o seu lugar favorito dentro de casa?",
+    "Você tem algum primo com quem gosta de brincar?","O que você mais gosta de fazer com sua família?",
+    "Se pudesse viajar com sua família para qualquer lugar, onde seria?"
+  ],
+  "Escola": [
+    "Qual é a sua turma?","Quem é sua professora?","Qual matéria você mais gosta?",
+    "Qual matéria você acha mais difícil?","O que mais gosta na escola?",
+    "Você tem um melhor amigo na escola?","Qual é o seu recreio favorito, com que brincadeira?",
+    "O que você quer aprender esse ano?","Você gosta de educação física?",
+    "Qual foi a coisa mais legal que aprendeu na escola?","Você prefere ler ou escrever?",
+    "Qual é o seu livro favorito?","O que você faria se fosse o professor por um dia?",
+    "Você gosta de trabalhar em grupo?","Qual é a sua parte favorita do dia na escola?"
+  ],
+  "Sentimentos": [
+    "Como você está se sentindo hoje?","O que te deixa feliz?","O que te deixa triste?",
+    "O que te deixa com raiva?","O que você faz quando está com medo?",
+    "Como você se sente quando ganha um elogio?","O que faz seu coração ficar quentinho?",
+    "Você já sentiu saudade de alguém? De quem?","O que você faz para se acalmar?",
+    "Quando foi a última vez que você riu muito?","O que te deixa orgulhoso de você mesmo?",
+    "Como você ajuda um amigo triste?","O que te dá coragem?",
+    "Qual é a coisa mais gentil que alguém já fez por você?","O que você faz quando está entediado?"
+  ],
+  "Amizade": [
+    "Quem é seu melhor amigo?","O que você mais gosta de fazer com seus amigos?",
+    "Como você faz um novo amigo?","O que é ser um bom amigo para você?",
+    "Você já ajudou um amigo? Como?","Qual brincadeira você mais gosta de fazer com seus amigos?",
+    "O que você faz quando um amigo está chateado?","Você prefere brincar sozinho ou com amigos?",
+    "Qual é a coisa mais legal que um amigo já fez por você?","O que você faria se visse um colega sendo excluído?"
+  ],
+  "Sonhos e Futuro": [
+    "O que você quer ser quando crescer?","Se pudesse ter um superpoder, qual seria?",
+    "Se pudesse viajar para qualquer lugar, onde iria?","Qual é o seu maior sonho?",
+    "O que você gostaria de inventar?","Se pudesse ser um animal, qual seria?",
+    "Onde você quer morar quando crescer?","Qual profissão te chama atenção?",
+    "O que você faria se tivesse um milhão de reais?","Se pudesse conhecer alguém famoso, quem seria?"
+  ],
+  "Corpo e Saúde": [
+    "O que você faz para se manter saudável?","Qual é o seu esporte favorito?","Você gosta de dançar?",
+    "O que você faz para relaxar?","Qual é a sua fruta favorita?","Você gosta de tomar sol?",
+    "Quantas horas você dorme por noite?","O que você faz quando está doente?",
+    "Você gosta de correr?","Qual é a sua forma favorita de se exercitar?"
+  ],
+  "Brincadeiras": [
+    "Qual é a sua brincadeira favorita?","Você prefere brincar dentro ou fora de casa?",
+    "Qual é o seu jogo favorito?","Você gosta de desenhar?","Qual é o seu brinquedo favorito?",
+    "Você prefere quebra-cabeça ou jogo de tabuleiro?","Qual é a brincadeira mais divertida que você já fez?",
+    "Você gosta de construir coisas com blocos?","Qual é o seu personagem de desenho favorito?",
+    "Se pudesse inventar um brinquedo, como ele seria?"
+  ],
+  "Criatividade": [
+    "Se tivesse um superpoder, qual seria e o que faria com ele?","Se pudesse viajar no tempo, para quando iria?",
+    "Qual animal gostaria de ser por um dia?","Se pudesse criar um animal novo, como ele seria?",
+    "Se você fosse invisível por um dia, o que faria?","Se pudesse morar em qualquer planeta, qual escolheria?",
+    "Se sua vida fosse um filme, qual seria o título?","Se pudesse falar com os animais, o que perguntaria primeiro?",
+    "Se encontrasse um tesouro, o que faria com ele?","Se pudesse criar uma nova cor, como ela seria?",
+    "Se você fosse um super-herói, qual seria seu nome?","Se pudesse ter qualquer coisa mágica, o que escolheria?",
+    "Se seu quarto fosse em outro planeta, como seria?","Se pudesse conversar com um robô, o que perguntaria a ele?",
+    "Se pudesse criar uma escola perfeita, como ela seria?"
+  ],
+  "Natureza e Animais": [
+    "Qual é o seu animal favorito?","Você gosta mais de cachorro ou gato?",
+    "Qual é o seu passeio favorito na natureza?","Você gostaria de ter um animal exótico de estimação?",
+    "Qual é a sua planta ou flor favorita?","Você gosta de acampar?","Qual animal você acha mais engraçado?",
+    "Você prefere o mar ou a floresta?","Qual é o pássaro que você mais gosta?",
+    "O que você faria para cuidar do meio ambiente?"
+  ],
+  "Alimentação": [
+    "Qual é a sua comida favorita?","Qual é a sua sobremesa favorita?","Você gosta de cozinhar?",
+    "Qual fruta você mais gosta?","Qual é o seu lanche favorito?","Você prefere doce ou salgado?",
+    "Qual é a comida que você não gosta?","Se pudesse criar um prato novo, como ele seria?",
+    "Qual é a sua bebida favorita?","Você gosta de comer em família?"
+  ],
+  "Curiosidades": [
+    "Qual é a sua música favorita?","Qual é o seu filme favorito?","Você tem algum talento especial?",
+    "Qual é a coisa mais engraçada que já aconteceu com você?","Qual é o seu super-herói favorito?",
+    "Você já viajou para algum lugar legal?","Qual é o seu aplicativo favorito?",
+    "Se pudesse aprender um novo idioma, qual seria?","Qual é o seu instrumento musical favorito?",
+    "O que você faz nas férias?"
+  ]
+};
+
+/* =========================================================================
+   BANCO DE ELOGIOS — nunca repete até esgotar o baralho
+   ========================================================================= */
+const BANCO_ELOGIOS = [
+"Gostei muito da sua resposta!","Você escreve com bastante dedicação!","Estou muito feliz em conversar com você!",
+"Continue assim, você está indo muito bem!","Cada resposta sua me ensina algo novo!","Sua professora vai ficar orgulhosa!",
+"Você é um excelente escritor!","Escrever é uma aventura, e você é ótimo nisso!","Vamos descobrir a próxima pergunta juntos?",
+"Uau, que resposta criativa!","Você tem ideias incríveis!","Adorei a forma como você pensa!",
+"Sua resposta me deixou sorrindo!","Você é muito inteligente!","Que resposta especial, obrigado por compartilhar!",
+"Você tem um jeito único de contar as coisas!","Isso foi muito bem pensado!","Uau, nunca tinha ouvido uma resposta assim!",
+"Você está se tornando um grande escritor!","Parabéns pela sua dedicação!","Você me surpreende a cada resposta!",
+"Adoro sua sinceridade!","Sua imaginação é enorme!","Você é corajoso ao compartilhar isso comigo!",
+"Isso mostra o quanto você é especial!","Muito bem! Vamos para a próxima!","Você está aprendendo cada vez mais!",
+"Essa resposta merece uma estrela!","Fico feliz em te conhecer melhor!","Você tem um coração generoso!",
+"Que orgulho de você!","Você é único e isso é incrível!","Adorei aprender mais sobre você!",
+"Sua resposta foi cheia de significado!","Continue compartilhando suas ideias, elas são valiosas!","Uau, você pensa rápido!",
+"Isso foi muito bem explicado!","Você tem talento para contar histórias!","Sua criatividade não tem limites!",
+"Isso me fez sorrir bastante!","Você é um exemplo de dedicação!","Gostei de como você se expressou!",
+"Sua resposta trouxe um sorriso ao meu rosto!","Você está indo super bem hoje!","Continue brilhando do seu jeito!",
+"Sua confiança está crescendo a cada resposta!","Isso foi incrível de ler!","Você merece um aplauso!",
+"Que resposta cheia de personalidade!","Adorei sua honestidade!","Você é muito corajoso ao se expressar assim!",
+"Essa resposta mostra o quanto você é especial!","Você tem uma mente muito curiosa!","Fico muito feliz com o seu progresso!",
+"Sua resposta foi cheia de carinho!","Você está evoluindo muito bem!","Que demais, adorei sua resposta!",
+"Sua criatividade me impressiona sempre!","Você tem um jeito lindo de pensar!","Continue assim, você está arrasando!",
+"Sua resposta foi muito bem elaborada!","Isso foi surpreendente e muito legal!","Você é uma inspiração!",
+"Gostei muito de saber disso sobre você!","Sua resposta trouxe muita alegria para mim!","Você está fazendo um ótimo trabalho!",
+"Isso mostra sua inteligência!","Adorei sua forma gentil de responder!","Você é uma pessoa incrível!",
+"Sua resposta foi cheia de emoção!","Continue compartilhando, estou adorando!","Você tem uma imaginação fantástica!",
+"Isso foi muito engraçado e criativo!","Sua resposta me deixou curioso para saber mais!","Você está fazendo um progresso incrível!",
+"Que resposta linda!","Você é muito atencioso ao responder!","Adorei o jeito que você contou isso!",
+"Sua resposta foi bem completa!","Você é muito esperto!","Isso foi muito bem pensado, parabéns!",
+"Você está se saindo maravilhosamente bem!","Sua resposta trouxe muita luz para essa conversa!","Continue sendo você mesmo, é incrível!",
+"Você tem uma energia contagiante!","Adorei sua resposta sincera!","Sua resposta foi cheia de detalhes interessantes!",
+"Você está aprendendo muito rápido!","Isso foi uma resposta e tanto!","Você é muito criativo, adorei!",
+"Sua resposta me fez pensar bastante!","Você tem um talento incrível para se expressar!","Continue assim, estou muito orgulhoso de você!",
+"Sua resposta foi cheia de originalidade!","Você está fazendo história com suas respostas!","Isso foi muito bacana de ler!",
+"Você tem um coração enorme!","Adorei a profundidade da sua resposta!","Sua resposta trouxe um brilho especial!",
+"Você é uma pessoa muito especial!","Continue explorando suas ideias, elas são ótimas!","Sua resposta foi muito envolvente!",
+"Você está se tornando cada vez melhor!","Isso foi realmente incrível!","Você tem uma voz única e importante!",
+"Adorei o carinho na sua resposta!","Sua resposta foi muito inspiradora!","Você está fazendo um trabalho fantástico!",
+"Isso mostra o quanto você se importa!","Você é muito talentoso!","Continue confiando em você mesmo!",
+"Sua resposta trouxe muita reflexão!","Você está brilhando hoje!","Isso foi realmente tocante!",
+"Você tem uma personalidade incrível!","Adorei sua perspectiva sobre isso!","Sua resposta foi muito genuína!",
+"Você está indo cada vez mais longe!","Isso foi uma resposta muito madura!","Você é uma pessoa muito gentil!",
+"Continue sendo curioso, isso é ótimo!","Sua resposta me ensinou algo novo hoje!","Você está fazendo um ótimo progresso!",
+"Isso foi muito divertido de ler!","Você tem um jeito especial de ver o mundo!","Adorei sua paciência ao responder!",
+"Sua resposta foi cheia de sabedoria!","Você está se superando a cada dia!","Isso foi realmente admirável!",
+"Você é muito autêntico!","Continue compartilhando seus pensamentos, adoro ouvi-los!","Sua resposta trouxe muita clareza!",
+"Você está fazendo tudo certo!","Isso foi uma bela demonstração de criatividade!","Você tem um espírito muito positivo!",
+"Adorei o entusiasmo na sua resposta!","Sua resposta foi muito bem construída!","Você está evoluindo de forma incrível!",
+"Isso foi muito especial de ler!","Você é uma grande fonte de inspiração!","Continue assim, o céu é o limite!",
+"Sua resposta trouxe muita alegria para o meu dia!","Você está indo muito bem nessa jornada!","Isso foi uma resposta cheia de amor!",
+"Você tem um coração cheio de bondade!","Adorei a sinceridade da sua resposta!","Sua resposta foi realmente única!",
+"Você está fazendo um trabalho maravilhoso!","Isso foi muito gentil da sua parte!","Você é incrível do jeitinho que é!",
+"Continue brilhando, você merece!","Sua resposta trouxe muito valor para essa conversa!","Você está se tornando cada vez mais sábio!",
+"Isso foi uma resposta muito completa!","Você tem uma mente brilhante!","Adorei aprender com você hoje!",
+"Sua resposta foi cheia de coragem!","Você está fazendo a diferença com suas palavras!","Isso foi muito emocionante de ler!",
+"Você é uma pessoa maravilhosa, continue assim!"
+];
+
+const EMOJIS_ELOGIO = ["🌟","✨","🎉","💫","🏅","🌈","🦄","🎈","🌸","👏","💛","🚀","🍀","😄","🔥"];
+
+/* =========================================================================
+/* =========================================================================
+   LINKS EXTERNOS — Dicionário e Jogos (arquivos a serem criados depois)
+   Basta colocar o caminho/URL de cada arquivo aqui quando estiver pronto.
+   Ex: dicionario: "dicionario.html"   |   velha: "jogos/jogo-da-velha.html"
+   Enquanto estiver vazio (""), o botão mostra um aviso de "em breve".
+   ========================================================================= */
+const LINKS_EXTERNOS = {
+  dicionario: "",
+  jogos: {
+    velha: "",
+    memoria: "",
+    complete: "",
+    mario: "",
+    pintar: "",
+    quebraCabeca: "",
+    investigacao: "",
+    espacial: "",
+    cruzadinha: "",
+    seteErros: "",
+    futebol: "",
+    alvo: "",
+    maisJogos: ""
+  }
+};
+
+function abrirLink(url, nomeAmigavel){
+  if(url && url.trim()){
+    window.location.href = url;
+  } else {
+    alert(`${nomeAmigavel} ainda está sendo preparado. Em breve estará disponível aqui! 🚧`);
+  }
+}
+
+/* =========================================================================
+   ANIMAÇÕES DO ROBÔ NA TELA INICIAL — pisca e ri de vez em quando
+   ========================================================================= */
+function iniciarAnimacoesRoboInicial(){
+  const robo = document.getElementById('robo-boasvindas');
+  if(!robo) return;
+
+  // desincroniza o piscar dos dois olhos para ficar mais natural
+  const olhoEsq = document.getElementById('olho-esq-boasvindas');
+  const olhoDir = document.getElementById('olho-dir-boasvindas');
+  if(olhoEsq) olhoEsq.style.animationDelay = (Math.random()*2).toFixed(2)+'s';
+  if(olhoDir) olhoDir.style.animationDelay = (Math.random()*2).toFixed(2)+'s';
+
+  function programarProximaRisada(){
+    const espera = 4000 + Math.random()*5000;
+    setTimeout(()=>{
+      robo.classList.add('rindo');
+      setTimeout(()=>robo.classList.remove('rindo'), 700);
+      programarProximaRisada();
+    }, espera);
+  }
+  programarProximaRisada();
+}
+
+/* ---------------------------------------------------------------------
+   ESTADO
+   ========================================================================= */
+let aluno = null;
+let filaPerguntas = [];
+let indiceAtual = 0;
+let respostas = [];
+let elogiosDisponiveis = [];
+const QTD_PERGUNTAS_SESSAO = 15;
+
+function irPara(idTela){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(idTela).classList.add('active');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+/* ---------- CADASTRO ---------- */
+function salvarCadastro(e){
+  e.preventDefault();
+  aluno = {
+    nome: document.getElementById('in-nome').value.trim(),
+    idade: document.getElementById('in-idade').value,
+    turma: document.getElementById('in-turma').value.trim(),
+    escola: document.getElementById('in-escola').value.trim(),
+    inicioEm: new Date().toISOString()
+  };
+  respostas = [];
+  document.getElementById('txt-saudacao').textContent =
+    `Muito prazer, ${primeiroNome(aluno.nome)}! Fico muito feliz em te conhecer. Preparei algumas perguntas especiais para a nossa conversa de hoje. Vamos começar?`;
+  irPara('tela-saudacao');
+  return false;
+}
+
+function primeiroNome(nomeCompleto){
+  return (nomeCompleto || '').split(' ')[0] || 'amigo(a)';
+}
+
+/* ---------- MONTAGEM DA FILA DE PERGUNTAS ---------- */
+function embaralhar(arr){
+  const a = arr.slice();
+  for(let i=a.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [a[i],a[j]] = [a[j],a[i]];
+  }
+  return a;
+}
+
+function montarFilaPerguntas(){
+  const banco = obterBancoPerguntas();
+  let todas = [];
+  for(const categoria in banco){
+    banco[categoria].forEach(p=>{
+      todas.push({categoria, texto:p});
+    });
+  }
+  todas = embaralhar(todas);
+  filaPerguntas = todas.slice(0, QTD_PERGUNTAS_SESSAO);
+  indiceAtual = 0;
+}
+
+/* =========================================================================
+   BANCO DE PERGUNTAS EDITÁVEL (persistido em localStorage)
+   ========================================================================= */
+function obterBancoPerguntas(){
+  const bruto = localStorage.getItem('roboEscolar_perguntas');
+  if(bruto){
+    try{
+      const banco = JSON.parse(bruto);
+      if(banco && Object.keys(banco).length > 0) return banco;
+    }catch(e){ /* cai para o padrão abaixo */ }
+  }
+  return JSON.parse(JSON.stringify(BANCO_PERGUNTAS_PADRAO));
+}
+
+function salvarBancoPerguntas(banco){
+  localStorage.setItem('roboEscolar_perguntas', JSON.stringify(banco));
+}
+
+function escapeHTML(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function iniciarPerguntas(){
+  montarFilaPerguntas();
+  elogiosDisponiveis = embaralhar(BANCO_ELOGIOS);
+  irPara('tela-perguntas');
+  mostrarPerguntaAtual();
+}
+
+/* ---------- FLUXO DE PERGUNTAS ---------- */
+function mostrarPerguntaAtual(){
+  const p = filaPerguntas[indiceAtual];
+  document.getElementById('tag-categoria').textContent = p.categoria;
+  document.getElementById('txt-pergunta').textContent = p.texto;
+  document.getElementById('in-resposta').value = '';
+  document.getElementById('progresso-txt').textContent = `Pergunta ${indiceAtual+1} de ${filaPerguntas.length}`;
+  document.getElementById('barra-fill').style.width = `${((indiceAtual)/filaPerguntas.length)*100}%`;
+
+  const robo = document.getElementById('robo-pergunta');
+  robo.classList.add('falando');
+  setTimeout(()=>robo.classList.remove('falando'), 1400);
+
+  document.getElementById('in-resposta').focus();
+}
+
+function enviarResposta(e){
+  e.preventDefault();
+  const texto = document.getElementById('in-resposta').value.trim();
+  if(!texto) return false;
+
+  const p = filaPerguntas[indiceAtual];
+  respostas.push({categoria:p.categoria, pergunta:p.texto, resposta:texto, em:new Date().toISOString()});
+
+  document.getElementById('barra-fill').style.width = `${((indiceAtual+1)/filaPerguntas.length)*100}%`;
+
+  mostrarElogio();
+  return false;
+}
+
+/* ---------- ELOGIOS SEM REPETIÇÃO ---------- */
+function proximoElogio(){
+  if(elogiosDisponiveis.length === 0){
+    elogiosDisponiveis = embaralhar(BANCO_ELOGIOS);
+  }
+  return elogiosDisponiveis.pop();
+}
+
+function mostrarElogio(){
+  const texto = proximoElogio();
+  const emoji = EMOJIS_ELOGIO[Math.floor(Math.random()*EMOJIS_ELOGIO.length)];
+  document.getElementById('elogio-texto').textContent = texto;
+  document.getElementById('elogio-emoji').textContent = emoji;
+  document.getElementById('elogio-overlay').classList.add('active');
+  dispararConfete();
+}
+
+function fecharElogio(){
+  document.getElementById('elogio-overlay').classList.remove('active');
+  indiceAtual++;
+  if(indiceAtual >= filaPerguntas.length){
+    finalizarSessao();
+  } else {
+    mostrarPerguntaAtual();
+  }
+}
+
+function dispararConfete(){
+  const cores = ['#ff6f59','#3dbfae','#ffc94d','#8e7cff','#ff8fc9'];
+  for(let i=0;i<24;i++){
+    const c = document.createElement('div');
+    c.className = 'confete';
+    c.style.left = Math.random()*100+'vw';
+    c.style.width = (6+Math.random()*6)+'px';
+    c.style.height = c.style.width;
+    c.style.background = cores[Math.floor(Math.random()*cores.length)];
+    c.style.transition = `transform ${1.2+Math.random()}s ease-in, opacity 1.6s ease-in`;
+    document.body.appendChild(c);
+    requestAnimationFrame(()=>{
+      c.style.transform = `translateY(${60+Math.random()*30}vh) rotate(${Math.random()*360}deg)`;
+      c.style.opacity = '0';
+    });
+    setTimeout(()=>c.remove(), 2000);
+  }
+}
+
+/* ---------- TELA FINAL / CERTIFICADO ---------- */
+function finalizarSessao(){
+  salvarNoBanco();
+
+  const totalRespondidas = respostas.length;
+  const totalPalavras = respostas.reduce((acc,r)=>acc + r.resposta.split(/\s+/).filter(Boolean).length, 0);
+  const categoriasUnicas = new Set(respostas.map(r=>r.categoria)).size;
+
+  document.getElementById('cert-nome').textContent = aluno.nome;
+  document.getElementById('cert-turma').textContent = `Turma: ${aluno.turma}${aluno.escola ? ' · ' + aluno.escola : ''}`;
+  document.getElementById('cert-data').textContent = 'Concluído em ' + new Date().toLocaleDateString('pt-BR');
+  document.getElementById('stat-respondidas').textContent = totalRespondidas;
+  document.getElementById('stat-palavras').textContent = totalPalavras;
+  document.getElementById('stat-categorias').textContent = categoriasUnicas;
+
+  let medalha = '🥉', mensagem = 'Você deu um ótimo primeiro passo nessa jornada de escrita!';
+  if(totalPalavras >= 150){ medalha = '🥇'; mensagem = 'Uau! Você escreveu com o coração e mostrou muita dedicação!'; }
+  else if(totalPalavras >= 80){ medalha = '🥈'; mensagem = 'Muito bem! Suas respostas foram cheias de ideias interessantes!'; }
+  document.getElementById('medalha-final').textContent = medalha;
+  document.getElementById('cert-mensagem').textContent = `Concluiu a jornada de perguntas com o Robô Beep, respondendo com muita dedicação!`;
+  document.getElementById('msg-incentivo').textContent = mensagem + ' Continue escrevendo, cada palavra sua é única. 💛';
+
+  irPara('tela-final');
+}
+
+/* ---------- PERSISTÊNCIA LOCAL (base para o painel do professor na v2) ---------- */
+function salvarNoBanco(){
+  try{
+    const chave = 'roboEscolar_sessoes';
+    const dados = JSON.parse(localStorage.getItem(chave) || '[]');
+    dados.push({
+      aluno: aluno,
+      respostas: respostas,
+      finalizadoEm: new Date().toISOString()
+    });
+    localStorage.setItem(chave, JSON.stringify(dados));
+  }catch(err){
+    console.warn('Não foi possível salvar localmente:', err);
+  }
+}
+
+function reiniciar(){
+  aluno = null;
+  respostas = [];
+  filaPerguntas = [];
+  indiceAtual = 0;
+  document.getElementById('form-cadastro').reset();
+  irPara('tela-boasvindas');
+}
+
+/* =========================================================================
+   ÁREA DO PROFESSOR — login, senha
+   ========================================================================= */
+function garantirSenhaPadrao(){
+  if(!localStorage.getItem('roboEscolar_senha')){
+    localStorage.setItem('roboEscolar_senha', 'professor123');
+  }
+}
+
+function tentarLoginProfessor(){
+  garantirSenhaPadrao();
+  const campo = document.getElementById('in-senha-login');
+  const senhaDigitada = campo.value;
+  const senhaSalva = localStorage.getItem('roboEscolar_senha');
+  if(senhaDigitada === senhaSalva){
+    campo.value = '';
+    document.getElementById('erro-senha').style.display = 'none';
+    abrirPainelProfessor();
+  } else {
+    document.getElementById('erro-senha').style.display = 'block';
+  }
+}
+
+function sairPainelProfessor(){
+  irPara('tela-boasvindas');
+}
+
+function alterarSenha(){
+  const atual = document.getElementById('in-senha-atual').value;
+  const nova = document.getElementById('in-senha-nova').value;
+  const confirma = document.getElementById('in-senha-confirma').value;
+  const senhaSalva = localStorage.getItem('roboEscolar_senha');
+  const msg = document.getElementById('msg-senha');
+
+  if(atual !== senhaSalva){
+    msg.style.color = 'var(--coral-dark)';
+    msg.textContent = 'A senha atual está incorreta.';
+    return;
+  }
+  if(nova.length < 4){
+    msg.style.color = 'var(--coral-dark)';
+    msg.textContent = 'A nova senha precisa ter pelo menos 4 caracteres.';
+    return;
+  }
+  if(nova !== confirma){
+    msg.style.color = 'var(--coral-dark)';
+    msg.textContent = 'As senhas digitadas não coincidem.';
+    return;
+  }
+  localStorage.setItem('roboEscolar_senha', nova);
+  msg.style.color = 'var(--mint-dark)';
+  msg.textContent = 'Senha alterada com sucesso!';
+  document.getElementById('in-senha-atual').value = '';
+  document.getElementById('in-senha-nova').value = '';
+  document.getElementById('in-senha-confirma').value = '';
+}
+
+/* =========================================================================
+   ÁREA DO PROFESSOR — painel, abas
+   ========================================================================= */
+let categoriaProfAtual = null;
+
+function abrirPainelProfessor(){
+  irPara('tela-professor-painel');
+  mudarTabProfessor('tab-perguntas');
+  popularSelectCategorias();
+  renderListaPerguntasProf();
+}
+
+function mudarTabProfessor(tabId){
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tabId));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.toggle('active', c.id === tabId));
+  if(tabId === 'tab-respostas') renderListaSessoes();
+}
+
+/* ---------- Gerenciamento de perguntas ---------- */
+function popularSelectCategorias(){
+  const banco = obterBancoPerguntas();
+  const sel = document.getElementById('sel-categoria-prof');
+  const selecaoAnterior = categoriaProfAtual;
+  sel.innerHTML = '';
+  Object.keys(banco).forEach(cat=>{
+    const opt = document.createElement('option');
+    opt.value = cat;
+    opt.textContent = `${cat} (${banco[cat].length})`;
+    sel.appendChild(opt);
+  });
+  if(selecaoAnterior && banco[selecaoAnterior]){
+    sel.value = selecaoAnterior;
+  }
+  categoriaProfAtual = sel.value;
+}
+
+function renderListaPerguntasProf(){
+  const banco = obterBancoPerguntas();
+  categoriaProfAtual = document.getElementById('sel-categoria-prof').value;
+  const lista = banco[categoriaProfAtual] || [];
+  const container = document.getElementById('lista-perguntas-prof');
+
+  if(lista.length === 0){
+    container.innerHTML = '<p class="hint">Nenhuma pergunta nesta categoria ainda. Adicione a primeira abaixo!</p>';
+    return;
+  }
+
+  container.innerHTML = lista.map((texto, idx) => `
+    <div class="pergunta-item">
+      <span class="texto">${escapeHTML(texto)}</span>
+      <button class="icon-btn" title="Mover para cima" onclick="moverPergunta(${idx},-1)">↑</button>
+      <button class="icon-btn" title="Mover para baixo" onclick="moverPergunta(${idx},1)">↓</button>
+      <button class="icon-btn" title="Editar" onclick="editarPergunta(${idx})">✏️</button>
+      <button class="icon-btn" title="Excluir" onclick="excluirPergunta(${idx})">🗑️</button>
+    </div>
+  `).join('');
+}
+
+function adicionarPergunta(){
+  const input = document.getElementById('in-nova-pergunta');
+  const texto = input.value.trim();
+  if(!texto) return;
+  const banco = obterBancoPerguntas();
+  banco[categoriaProfAtual].push(texto);
+  salvarBancoPerguntas(banco);
+  input.value = '';
+  popularSelectCategorias();
+  document.getElementById('sel-categoria-prof').value = categoriaProfAtual;
+  renderListaPerguntasProf();
+}
+
+function editarPergunta(idx){
+  const banco = obterBancoPerguntas();
+  const atual = banco[categoriaProfAtual][idx];
+  const novo = prompt('Editar pergunta:', atual);
+  if(novo === null) return;
+  const texto = novo.trim();
+  if(!texto) return;
+  banco[categoriaProfAtual][idx] = texto;
+  salvarBancoPerguntas(banco);
+  renderListaPerguntasProf();
+}
+
+function excluirPergunta(idx){
+  if(!confirm('Excluir esta pergunta?')) return;
+  const banco = obterBancoPerguntas();
+  banco[categoriaProfAtual].splice(idx, 1);
+  salvarBancoPerguntas(banco);
+  popularSelectCategorias();
+  document.getElementById('sel-categoria-prof').value = categoriaProfAtual;
+  renderListaPerguntasProf();
+}
+
+function moverPergunta(idx, direcao){
+  const banco = obterBancoPerguntas();
+  const lista = banco[categoriaProfAtual];
+  const novoIdx = idx + direcao;
+  if(novoIdx < 0 || novoIdx >= lista.length) return;
+  [lista[idx], lista[novoIdx]] = [lista[novoIdx], lista[idx]];
+  salvarBancoPerguntas(banco);
+  renderListaPerguntasProf();
+}
+
+function novaCategoria(){
+  const nome = prompt('Nome da nova categoria:');
+  if(nome === null) return;
+  const chave = nome.trim();
+  if(!chave) return;
+  const banco = obterBancoPerguntas();
+  if(banco[chave]){
+    alert('Essa categoria já existe.');
+    return;
+  }
+  banco[chave] = [];
+  salvarBancoPerguntas(banco);
+  categoriaProfAtual = chave;
+  popularSelectCategorias();
+  document.getElementById('sel-categoria-prof').value = chave;
+  renderListaPerguntasProf();
+}
+
+function excluirCategoriaAtual(){
+  if(!categoriaProfAtual) return;
+  if(!confirm(`Excluir a categoria "${categoriaProfAtual}" e todas as suas perguntas?`)) return;
+  const banco = obterBancoPerguntas();
+  delete banco[categoriaProfAtual];
+  if(Object.keys(banco).length === 0){
+    alert('É preciso manter ao menos uma categoria. O banco padrão será restaurado.');
+    salvarBancoPerguntas(JSON.parse(JSON.stringify(BANCO_PERGUNTAS_PADRAO)));
+    categoriaProfAtual = null;
+  } else {
+    salvarBancoPerguntas(banco);
+    categoriaProfAtual = null;
+  }
+  popularSelectCategorias();
+  renderListaPerguntasProf();
+}
+
+/* ---------- Importar / Exportar ---------- */
+function baixarArquivo(nome, conteudo, tipo){
+  const blob = new Blob([conteudo], {type: tipo});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nome;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function exportarPerguntasJSON(){
+  const banco = obterBancoPerguntas();
+  baixarArquivo('perguntas-robo-escolar.json', JSON.stringify(banco, null, 2), 'application/json');
+}
+
+function importarPerguntasJSON(event){
+  const arquivo = event.target.files[0];
+  if(!arquivo) return;
+  const leitor = new FileReader();
+  leitor.onload = function(e){
+    try{
+      const novoBanco = JSON.parse(e.target.result);
+      if(typeof novoBanco !== 'object' || Array.isArray(novoBanco)) throw new Error('formato inválido');
+
+      const substituir = confirm('Clique em OK para SUBSTITUIR todo o banco de perguntas pelo arquivo importado, ou Cancelar para MESCLAR com as perguntas já existentes.');
+      let bancoFinal;
+      if(substituir){
+        bancoFinal = novoBanco;
+      } else {
+        bancoFinal = obterBancoPerguntas();
+        Object.keys(novoBanco).forEach(categoria=>{
+          if(!bancoFinal[categoria]) bancoFinal[categoria] = [];
+          (novoBanco[categoria] || []).forEach(pergunta=>{
+            if(!bancoFinal[categoria].includes(pergunta)){
+              bancoFinal[categoria].push(pergunta);
+            }
+          });
+        });
+      }
+      salvarBancoPerguntas(bancoFinal);
+      categoriaProfAtual = null;
+      popularSelectCategorias();
+      renderListaPerguntasProf();
+      alert('Perguntas importadas com sucesso!');
+    }catch(err){
+      alert('Não foi possível ler esse arquivo. Verifique se é um .json de perguntas exportado por este sistema.');
+    }
+    event.target.value = '';
+  };
+  leitor.readAsText(arquivo);
+}
+
+function exportarRespostasJSON(){
+  const dados = JSON.parse(localStorage.getItem('roboEscolar_sessoes') || '[]');
+  baixarArquivo('respostas-robo-escolar.json', JSON.stringify(dados, null, 2), 'application/json');
+}
+
+function exportarRespostasCSV(){
+  const dados = JSON.parse(localStorage.getItem('roboEscolar_sessoes') || '[]');
+  const linhas = [['Aluno','Idade','Turma','Escola','Categoria','Pergunta','Resposta','Data']];
+  dados.forEach(sessao=>{
+    (sessao.respostas || []).forEach(r=>{
+      linhas.push([
+        sessao.aluno.nome, sessao.aluno.idade, sessao.aluno.turma, sessao.aluno.escola || '',
+        r.categoria, r.pergunta, (r.resposta || '').replace(/\n/g,' '), new Date(r.em).toLocaleString('pt-BR')
+      ]);
+    });
+  });
+  const csv = linhas.map(linha =>
+    linha.map(campo => `"${String(campo).replace(/"/g,'""')}"`).join(';')
+  ).join('\n');
+  baixarArquivo('respostas-robo-escolar.csv', '\uFEFF' + csv, 'text/csv;charset=utf-8;');
+}
+
+/* ---------- Sessões registradas ---------- */
+function renderListaSessoes(){
+  const dados = JSON.parse(localStorage.getItem('roboEscolar_sessoes') || '[]');
+  const container = document.getElementById('lista-sessoes');
+  if(dados.length === 0){
+    container.innerHTML = '<p class="hint">Nenhuma sessão registrada ainda neste computador.</p>';
+    return;
+  }
+  container.innerHTML = dados.slice().reverse().map(sessao => `
+    <div class="sessao-item">
+      <strong>${escapeHTML(sessao.aluno.nome)}</strong> · ${escapeHTML(sessao.aluno.turma)}${sessao.aluno.escola ? ' · ' + escapeHTML(sessao.aluno.escola) : ''}
+      <div class="hint">${new Date(sessao.finalizadoEm).toLocaleString('pt-BR')} · ${sessao.respostas.length} pergunta(s) respondida(s)</div>
+    </div>
+  `).join('');
+}
+
+function limparSessoes(){
+  if(!confirm('Isso vai apagar TODAS as respostas registradas neste computador. Deseja continuar?')) return;
+  localStorage.removeItem('roboEscolar_sessoes');
+  renderListaSessoes();
+}
+
+/* Garante que exista uma senha padrão assim que a página carrega */
+garantirSenhaPadrao();
+iniciarAnimacoesRoboInicial();
+</script>
+<script src="kiosk.js"></script>
+</body>
+</html>
